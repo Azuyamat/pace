@@ -9,6 +9,7 @@ import (
 )
 
 func main() {
+	// Parse configuration file
 	config, err := config.ParseFile("config.pace")
 	if err != nil {
 		fmt.Println("Error parsing config file:", err)

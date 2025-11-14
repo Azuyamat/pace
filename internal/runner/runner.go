@@ -26,7 +26,6 @@ func (r *Runner) RunTask(taskName string) error {
 		return nil
 	}
 
-	// Run dependencies first
 	dependencies := task.Dependencies
 	for _, dependency := range dependencies {
 		if err := r.RunTask(dependency); err != nil {
@@ -34,12 +33,11 @@ func (r *Runner) RunTask(taskName string) error {
 		}
 	}
 
-	// Check if task needs to be re-run
 	needsRun, err := r.needsRerun(taskName)
 	if err != nil {
 		return fmt.Errorf("failed to check cache for task %q: %v", taskName, err)
 	}
-	
+
 	if !needsRun {
 		fmt.Printf("Task %q is up to date (cache hit)\n", taskName)
 		return nil
@@ -77,7 +75,6 @@ func (r *Runner) RunTask(taskName string) error {
 		return fmt.Errorf("failed to run task %q: %v", taskName, err)
 	}
 
-	// Update cache after successful execution
 	if err := r.updateCache(taskName); err != nil {
 		fmt.Printf("Warning: failed to update cache for task %q: %v\n", taskName, err)
 	}
