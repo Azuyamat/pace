@@ -1,0 +1,31 @@
+task "jeff" {
+    command "echo jeff"
+}
+
+task "build" {
+    command "go build -o pace.exe cmd/pace/main.go"
+    inputs ["cmd/pace/main.go", "internal/config/*.go", "internal/models/*.go", "internal/runner/*.go"]
+    outputs ["pace.exe"]
+    cache true
+}
+
+task "test" {
+    command "go test ./..."
+    dependencies ["build"]
+}
+
+task "ping" {
+    command "ping google.com -n 4"
+    env {
+        "PING_COUNT" "4"
+    }
+    cache true
+    working_dir "."
+}
+
+task "write" {
+    command "echo Hello, World! > hello.txt"
+    outputs ["hello.txt"]
+    cache true
+    working_dir "."
+}
