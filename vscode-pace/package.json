@@ -1,6 +1,6 @@
 {
   "name": "pace-language",
-  "displayName": "Pace Language Support",
+  "displayName": "Pace Task Runner Language",
   "description": "Syntax highlighting and autocomplete for Pace configuration files",
   "version": "0.2.0",
   "publisher": "PaceLanguageSupport",
