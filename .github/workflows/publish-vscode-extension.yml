@@ -1,0 +1,38 @@
+name: Publish VS Code Extension
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'vscode-pace/**'
+      - '.github/workflows/publish-vscode-extension.yml'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        working-directory: ./vscode-pace
+        run: npm install
+
+      - name: Compile extension
+        working-directory: ./vscode-pace
+        run: npm run compile
+
+      - name: Publish to VS Code Marketplace
+        working-directory: ./vscode-pace
+        run: |
+          npm install -g @vscode/vsce
+          vsce publish -p $VSCE_PAT
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
