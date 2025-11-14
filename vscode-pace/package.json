@@ -3,7 +3,7 @@
   "displayName": "Pace Language Support",
   "description": "Syntax highlighting and autocomplete for Pace configuration files",
   "version": "0.2.0",
-  "publisher": "pace",
+  "publisher": "PaceLanguageSupport",
   "engines": {
     "vscode": "^1.75.0"
   },
