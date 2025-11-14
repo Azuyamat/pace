@@ -1,0 +1,50 @@
+{
+  "name": "pace-language",
+  "displayName": "Pace Language Support",
+  "description": "Syntax highlighting and autocomplete for Pace configuration files",
+  "version": "0.2.0",
+  "publisher": "pace",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:pace"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "pace",
+        "aliases": [
+          "Pace",
+          "pace"
+        ],
+        "extensions": [
+          ".pace"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "pace",
+        "scopeName": "source.pace",
+        "path": "./syntaxes/pace.tmLanguage.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.75.0",
+    "typescript": "^5.0.0"
+  }
+}

@@ -1,0 +1,130 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Pace",
+  "scopeName": "source.pace",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#variables"
+    },
+    {
+      "include": "#blocks"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#booleans"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.number-sign.pace",
+          "match": "#.*$"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.pace",
+          "match": "\\b(set|default|alias|globals|hook|task)\\b"
+        },
+        {
+          "name": "keyword.other.pace",
+          "match": "\\b(description|command|before|after|inputs|outputs|cache|on_success|on_failure|dependencies|parallel|timeout|retry|retry_delay|silent|watch|continue_on_error|env|args|required|optional)\\b"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.triple.pace",
+          "begin": "\"\"\"",
+          "end": "\"\"\"",
+          "patterns": [
+            {
+              "include": "#variable-interpolation"
+            },
+            {
+              "name": "constant.character.escape.pace",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.double.pace",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "include": "#variable-interpolation"
+            },
+            {
+              "name": "constant.character.escape.pace",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "variable-interpolation": {
+      "patterns": [
+        {
+          "name": "variable.other.interpolated.pace",
+          "match": "\\$\\{[a-zA-Z_][a-zA-Z0-9_]*\\}"
+        },
+        {
+          "name": "variable.other.simple.pace",
+          "match": "\\$[a-zA-Z_][a-zA-Z0-9_]*"
+        }
+      ]
+    },
+    "variables": {
+      "patterns": [
+        {
+          "name": "variable.other.pace",
+          "match": "\\$\\{[a-zA-Z_][a-zA-Z0-9_]*\\}"
+        },
+        {
+          "name": "variable.other.pace",
+          "match": "\\$[a-zA-Z_][a-zA-Z0-9_]*"
+        }
+      ]
+    },
+    "blocks": {
+      "patterns": [
+        {
+          "name": "punctuation.definition.block.pace",
+          "match": "[{}\\[\\]]"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.pace",
+          "match": "\\b\\d+(\\.\\d+)?(s|m|h|ms)?\\b"
+        }
+      ]
+    },
+    "booleans": {
+      "patterns": [
+        {
+          "name": "constant.language.boolean.pace",
+          "match": "\\b(true|false)\\b"
+        }
+      ]
+    }
+  }
+}
