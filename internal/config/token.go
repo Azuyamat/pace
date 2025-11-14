@@ -12,6 +12,7 @@ const (
 
 	TOKEN_IDENTIFIER
 	TOKEN_STRING
+	TOKEN_MULTILINE_STRING
 	TOKEN_NUMBER
 	TOKEN_BOOLEAN
 
@@ -20,6 +21,9 @@ const (
 	TOKEN_LBRACKET
 	TOKEN_RBRACKET
 	TOKEN_COMMA
+	TOKEN_DOLLAR
+	TOKEN_LPAREN
+	TOKEN_RPAREN
 
 	TOKEN_COMMENT
 	TOKEN_NEWLINE
@@ -66,6 +70,8 @@ func (tokenType TokenType) String() string {
 		return "IDENTIFIER"
 	case TOKEN_STRING:
 		return "STRING"
+	case TOKEN_MULTILINE_STRING:
+		return "MULTILINE_STRING"
 	case TOKEN_NUMBER:
 		return "NUMBER"
 	case TOKEN_BOOLEAN:
@@ -80,6 +86,12 @@ func (tokenType TokenType) String() string {
 		return "RBRACKET"
 	case TOKEN_COMMA:
 		return "COMMA"
+	case TOKEN_DOLLAR:
+		return "DOLLAR"
+	case TOKEN_LPAREN:
+		return "LPAREN"
+	case TOKEN_RPAREN:
+		return "RPAREN"
 	case TOKEN_COMMENT:
 		return "COMMENT"
 	case TOKEN_NEWLINE:

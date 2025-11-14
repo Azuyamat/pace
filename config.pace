@@ -1,31 +1,176 @@
-task "jeff" {
-    command "echo jeff"
+set BUILD_OUTPUT "pace.exe"
+set BUILD_DIR "./build"
+set VERSION "1.0.0"
+
+default "build"
+
+alias "b" "build"
+alias "t" "test-all"
+alias "d" "dev"
+
+globals {
+    "SHELL" "powershell.exe"
+    "SHELL_ARGS" "-NoProfile -NonInteractive -Command"
+}
+
+hook "setup" {
+    description "Set up the build environment"
+    command "echo Setting up environment..."
+    env {
+        "SETUP_MODE" "verbose"
+    }
+}
+
+hook "hook-name" {
+    description "description"
+}
+
+hook "cleanup" {
+    description "Clean up temporary files"
+    command "echo Cleaning up temporary files..."
+}
+
+hook "notify-success" {
+    description "Notify on successful build"
+    command "echo ✓ Build completed successfully!"
+}
+
+hook "notify-failure" {
+    description "Notify on build failure"
+    command "echo ✗ Build failed!"
 }
 
 task "build" {
+    description "Build the Pace executable for production"
     command "go build -o pace.exe cmd/pace/main.go"
-    inputs ["cmd/pace/main.go", "internal/config/*.go", "internal/models/*.go", "internal/runner/*.go"]
-    outputs ["pace.exe"]
+    before ["setup"]
+    after ["cleanup"]
+    inputs ["cmd/pace/main.go", "internal/**/*.go"]
+    outputs ["${BUILD_OUTPUT}"]
     cache true
+    
+    on_success ["notify-success"]
+    on_failure ["notify-failure"]
 }
 
-task "test" {
-    command "go test ./..."
-    dependencies ["build"]
+task "build-all" {
+    description "Build for multiple platforms"
+    command """
+echo Building for Windows...
+go build -o build/pace-windows.exe cmd/pace/main.go
+echo Building for Linux...
+go build -o build/pace-linux cmd/pace/main.go
+echo Building for macOS...
+go build -o build/pace-macos cmd/pace/main.go
+"""
+    outputs ["build/pace-windows.exe", "build/pace-linux", "build/pace-macos"]
 }
 
-task "ping" {
-    command "ping google.com -n 4"
+task "test-all" {
+    description "Run all tests in parallel"
+    dependencies ["unit-tests", "integration-tests"]
+    parallel true
+    command "echo All tests completed"
+}
+
+task "unit-tests" {
+    description "Run unit tests"
+    command "go test ./internal/..."
+    
+    timeout "5m"
+}
+
+task "integration-tests" {
+    description "Run integration tests"
+    command "go test -tags=integration ./..."
+    
+    retry 2
+    retry_delay "3s"
+    timeout "10m"
+}
+
+task "clean" {
+    description "Clean build artifacts"
+    command "rm -rf ${BUILD_DIR} *.exe .pace-cache"
+    silent true
+}
+
+task "dev" {
+    description "Development mode with auto-rebuild"
+    command "go run cmd/pace/main.go"
+    inputs ["cmd/**/*.go", "internal/**/*.go"]
+    watch true
+}
+
+task "ci" {
+    description "Continuous Integration - run all checks"
+    dependencies ["lint", "test-all", "build"]
+    command "echo CI pipeline completed"
+    continue_on_error true
+    parallel false
+}
+
+task "lint" {
+    description "Run code linters"
+    command "go vet ./..."
+    timeout "2m"
+}
+
+task "deploy" {
+    description "Deploy the application"
+    dependencies ["build", "test-all"]
+    command "echo Deploying version ${VERSION}..."
+    
     env {
-        "PING_COUNT" "4"
+        "DEPLOY_ENV" "production"
+        "VERSION" "${VERSION}"
     }
-    cache true
-    working_dir "."
+    
+    timeout "15m"
+    retry 1
+    retry_delay "10s"
+    
+    before ["setup"]
+    on_success ["notify-success"]
+    on_failure ["notify-failure", "cleanup"]
 }
 
-task "write" {
-    command "echo Hello, World! > hello.txt"
-    outputs ["hello.txt"]
-    cache true
-    working_dir "."
+task "docs" {
+    description "Generate documentation"
+    command "go doc -all > docs/API.md"
+    outputs ["docs/API.md"]
+}
+
+# Benchmark task
+task "benchmark" {
+    description "Run performance benchmarks"
+    command "go test -bench=. -benchmem ./..."
+    timeout "30m"
+    silent false
+}
+
+task "echo-test" {
+    description "Test passing extra arguments to commands"
+    args {
+        required ["message"]
+        optional ["suffix"]
+    }
+    command "echo Hello from pace: $message $suffix"
+}
+
+task "greet" {
+    description "Greet someone by name (usage: pace greet YourName)"
+    args {
+        required ["name"]
+    }
+    command "echo Hello $name, welcome to Pace!"
+}
+
+task "deploy" {
+    description "Deploy to a specific environment"
+    args {
+        required ["environment", "version"]
+        optional ["region"]
+    }
+    command "echo Deploying version $version to $environment in region $region"
 }

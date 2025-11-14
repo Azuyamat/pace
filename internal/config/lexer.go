@@ -1,66 +1,41 @@
 package config
 
-// Lexer tokenizes input text for the configuration parser
 type Lexer struct {
-	input        string
-	position     int
-	readPosition int
-	char         byte
-	line         int
-	column       int
+	scanner *Scanner
+	input   string
 }
 
-// NewLexer creates a new lexer for the given input
 func NewLexer(input string) *Lexer {
-	l := &Lexer{
-		input:  input,
-		line:   1,
-		column: 1,
+	scanner := NewScanner(input, 0, 0, 0, 1, 1)
+	scanner.ReadChar()
+	return &Lexer{
+		scanner: scanner,
+		input:   input,
 	}
-	l.readChar()
-	return l
 }
 
-// GetInput returns the original input string for error reporting
 func (l *Lexer) GetInput() string {
 	return l.input
 }
 
 func (l *Lexer) Position() (line, column int) {
-	return l.line, l.column
-}
-
-func (l *Lexer) readChar() {
-	if l.readPosition >= len(l.input) {
-		l.char = 0 // EOF
-	} else {
-		l.char = l.input[l.readPosition]
-	}
-	l.position = l.readPosition
-	l.readPosition++
-	l.column++
-}
-
-func (l *Lexer) peekChar() byte {
-	if l.readPosition >= len(l.input) {
-		return 0 // EOF
-	}
-	return l.input[l.readPosition]
+	_, _, _, line, column = l.scanner.GetState()
+	return line, column
 }
 
 func (l *Lexer) isAtEnd() bool {
-	return l.char == 0
+	_, _, char, _, _ := l.scanner.GetState()
+	return char == 0
 }
 
 func (l *Lexer) NextToken() Token {
-	l.skipWhitespace()
+	l.scanner.SkipWhitespace()
 
-	line := l.line
-	column := l.column
+	_, _, char, line, column := l.scanner.GetState()
 
 	var token Token
 
-	switch l.char {
+	switch char {
 	case '{':
 		token = l.makeSingleCharToken(TOKEN_LBRACE, line, column)
 	case '}':
@@ -71,23 +46,42 @@ func (l *Lexer) NextToken() Token {
 		token = l.makeSingleCharToken(TOKEN_RBRACKET, line, column)
 	case ',':
 		token = l.makeSingleCharToken(TOKEN_COMMA, line, column)
+	case '$':
+		token = l.makeSingleCharToken(TOKEN_DOLLAR, line, column)
+	case '(':
+		token = l.makeSingleCharToken(TOKEN_LPAREN, line, column)
+	case ')':
+		token = l.makeSingleCharToken(TOKEN_RPAREN, line, column)
 	case '"':
-		token = l.scanString(line, column)
+		// Check for triple-quoted string
+		if l.scanner.PeekChar() == '"' {
+			_, _, nextChar, _, _ := l.scanner.GetState()
+			l.scanner.ReadChar() // Consume second quote
+			if l.scanner.PeekChar() == '"' {
+				token = l.scanMultilineString(line, column)
+			} else {
+				// Two quotes in a row, treat as empty string followed by quote
+				l.scanner.SetState(l.scanner.position-1, l.scanner.readPosition-1, nextChar, line, column)
+				token = l.scanString(line, column)
+			}
+		} else {
+			token = l.scanString(line, column)
+		}
 	case '#':
 		token = l.scanComment(line, column)
 	case '\n':
 		token = l.scanNewline(line, column)
 	case '\r':
-		l.readChar()
+		l.scanner.ReadChar()
 		return l.NextToken()
 	case 0:
 		token = NewEOFToken(line, column)
-		l.readChar()
+		l.scanner.ReadChar()
 		return token
 	default:
-		if isLetter(l.char) {
+		if isLetter(char) {
 			return l.scanIdentifier(line, column)
-		} else if isDigit(l.char) {
+		} else if isDigit(char) {
 			return l.scanNumber(line, column)
 		} else {
 			token = l.makeSingleCharToken(TOKEN_ILLEGAL, line, column)
@@ -98,89 +92,48 @@ func (l *Lexer) NextToken() Token {
 }
 
 func (l *Lexer) makeSingleCharToken(tokenType TokenType, line, column int) Token {
-	token := newToken(tokenType, l.char, line, column)
-	l.readChar()
+	_, _, char, _, _ := l.scanner.GetState()
+	token := newToken(tokenType, char, line, column)
+	l.scanner.ReadChar()
 	return token
 }
 
-func (l *Lexer) skipWhitespace() {
-	for l.char == ' ' || l.char == '\t' {
-		l.column++
-		l.readChar()
-	}
-}
-
 func (l *Lexer) scanIdentifier(line, column int) Token {
-	literal := l.readIdentifier()
+	literal := l.scanner.ScanIdentifier()
 	tokenType := lookupIdent(literal)
 	return NewTokenWithLiteral(tokenType, literal, line, column)
 }
 
 func (l *Lexer) scanNumber(line, column int) Token {
-	literal := l.readNumber()
+	literal := l.scanner.ScanNumber()
 	return NewTokenWithLiteral(TOKEN_NUMBER, literal, line, column)
 }
 
 func (l *Lexer) scanString(line, column int) Token {
-	literal := l.readString()
-	l.readChar() // consume the closing quote
+	literal := l.scanner.ScanString()
+	l.scanner.ReadChar()
 	return NewTokenWithLiteral(TOKEN_STRING, literal, line, column)
 }
 
+func (l *Lexer) scanMultilineString(line, column int) Token {
+	literal := l.scanner.ScanMultilineString()
+	l.scanner.ReadChar()
+	return NewTokenWithLiteral(TOKEN_MULTILINE_STRING, literal, line, column)
+}
+
 func (l *Lexer) scanComment(line, column int) Token {
-	literal := l.readComment()
+	literal := l.scanner.ScanComment()
 	return NewTokenWithLiteral(TOKEN_COMMENT, literal, line, column)
 }
 
 func (l *Lexer) scanNewline(line, column int) Token {
-	token := newToken(TOKEN_NEWLINE, l.char, line, column)
-	l.line++
-	l.column = 0
-	l.readChar()
+	_, _, char, _, _ := l.scanner.GetState()
+	token := newToken(TOKEN_NEWLINE, char, line, column)
+
+	_, _, _, currentLine, _ := l.scanner.GetState()
+	l.scanner.SetState(l.scanner.position, l.scanner.readPosition, l.scanner.char, currentLine+1, 0)
+	l.scanner.ReadChar()
 	return token
-}
-
-func (l *Lexer) readIdentifier() string {
-	position := l.position
-	for isLetter(l.char) {
-		l.readChar()
-	}
-	return l.input[position:l.position]
-}
-
-func (l *Lexer) readNumber() string {
-	position := l.position
-	for isDigit(l.char) {
-		l.readChar()
-	}
-	return l.input[position:l.position]
-}
-
-func (l *Lexer) readComment() string {
-	position := l.position
-	for l.char != '\n' && l.char != 0 {
-		l.readChar()
-	}
-	return l.input[position:l.position]
-}
-
-func (l *Lexer) readString() string {
-	position := l.position + 1
-	for {
-		l.readChar()
-		if l.char == '"' || l.char == 0 {
-			break
-		}
-	}
-	return l.input[position:l.position]
-}
-
-func isLetter(char byte) bool {
-	return (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || char == '_'
-}
-
-func isDigit(char byte) bool {
-	return char >= '0' && char <= '9'
 }
 
 func lookupIdent(ident string) TokenType {
