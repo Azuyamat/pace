@@ -7,6 +7,12 @@
   "engines": {
     "vscode": "^1.75.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Azuyamat/pace.git",
+    "directory": "vscode-pace"
+  },
+  "license": "MIT",
   "categories": [
     "Programming Languages"
   ],
