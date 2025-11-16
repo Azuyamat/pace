@@ -1,24 +1,28 @@
 package command
 
 import (
-	"flag"
 	"sort"
 
 	"azuyamat.dev/pace/internal/config"
 	"azuyamat.dev/pace/internal/logger"
 )
 
-func List(cfg *config.Config, args []string) {
-	listFlags := flag.NewFlagSet("list", flag.ExitOnError)
-	tree := listFlags.Bool("tree", false, "Show task dependency tree")
+func init() {
+	CommandRegistry.Register(listCommand())
+}
 
-	listFlags.Parse(args)
+func listCommand() *Command {
+	return NewCommand("list", "List all available tasks and their details").
+		SetHandler(NewHandler(
+			func(ctx *CommandContext, args *ValidatedArgs) {
+				treeView := ctx.GetFlagOr("tree", false).(bool)
 
-	if *tree {
-		printTaskTree(cfg)
-	} else {
-		printTaskList(cfg)
-	}
+				if treeView {
+					printTaskTree(ctx.GetConfig())
+				} else {
+					printTaskList(ctx.GetConfig())
+				}
+			}))
 }
 
 func printTaskList(cfg *config.Config) {
