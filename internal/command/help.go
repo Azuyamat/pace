@@ -12,6 +12,7 @@ func helpCommand() *Command {
 		SetHandler(NewHandler(
 			func(ctx *CommandContext, args *ValidatedArgs) {
 				commandName := args.StringOr("command", "")
+				logger.Debug("Help command invoked with argument: %s", commandName)
 				if commandName == "" {
 					logger.Info("Available commands:")
 					for _, cmd := range CommandRegistry.Commands() {
