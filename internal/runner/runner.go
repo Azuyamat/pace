@@ -44,6 +44,13 @@ func NewRunner(cfg *config.Config) *Runner {
 	return r
 }
 
+func (r *Runner) Reset() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.completed = make(map[string]bool)
+	r.running = make(map[string]bool)
+}
+
 func (r *Runner) validateAndSetArgs(task *models.Task, extraArgs []string) error {
 	// If no args definition, use old behavior (positional only)
 	if task.Args == nil {
