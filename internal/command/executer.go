@@ -1,6 +1,8 @@
 package command
 
 import (
+	"fmt"
+
 	"azuyamat.dev/pace/internal/config"
 	"azuyamat.dev/pace/internal/logger"
 )
@@ -23,7 +25,7 @@ func Execute(raw []string, cfg *config.Config) error {
 func executeCommand(cmdLabel string, rawArgs []string, ctx *CommandContext) error {
 	command, exists := CommandRegistry.GetCommand(cmdLabel)
 	if !exists {
-		return nil
+		return fmt.Errorf("command '%s' not found", cmdLabel)
 	}
 	return command.Execute(ctx, rawArgs)
 }

@@ -16,5 +16,7 @@ func main() {
 		logger.Error("Error: %v", err)
 		return
 	}
-	command.Execute(os.Args[1:], cfg)
+	if err := command.Execute(os.Args[1:], cfg); err != nil {
+		logger.Error("Error: %v", err)
+	}
 }

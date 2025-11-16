@@ -72,10 +72,9 @@ func (r *Runner) validateAndSetArgs(task *models.Task, extraArgs []string) error
 func (r *Runner) RunTask(taskName string, extraArgs ...string) error {
 	task, exists := r.Config.Tasks[taskName]
 	if !exists {
-		return nil
+		return fmt.Errorf("task %q not found", taskName)
 	}
 
-	// Validate and set extra arguments for this task execution
 	if err := r.validateAndSetArgs(&task, extraArgs); err != nil {
 		return err
 	}
