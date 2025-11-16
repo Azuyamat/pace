@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+	"strings"
 
 	"azuyamat.dev/pace/internal/config"
 	"azuyamat.dev/pace/internal/logger"
@@ -9,15 +10,14 @@ import (
 
 func Execute(raw []string, cfg *config.Config) error {
 	flags, args := extractFlags(raw)
-	logger.Debug("Extracted flags: %v, args: %v", flags, args)
+	logger.Debug("Extracted flags: %+v", flags)
+	logger.Debug("Remaining args: %+v", args)
 	ctx := NewCommandContext(cfg)
 	if len(args) == 0 {
 		return executeCommand("help", []string{}, ctx)
 	}
 	entryCommand := args[0]
-	for name, value := range flags {
-		ctx.SetFlag(name, value)
-	}
+	ctx.SetFlags(flags)
 	args = args[1:]
 	return executeCommand(entryCommand, args, ctx)
 }
@@ -30,37 +30,46 @@ func executeCommand(cmdLabel string, rawArgs []string, ctx *CommandContext) erro
 	return command.Execute(ctx, rawArgs)
 }
 
-func extractFlags(rawArgs []string) (map[string]string, []string) {
-	flags := make(map[string]string)
+func extractFlags(rawArgs []string) (map[string]*Flag, []string) {
+	flags := make(map[string]*Flag)
 	args := []string{}
-	skipNext := false
 
-	for i, arg := range rawArgs {
-		if skipNext {
-			skipNext = false
+	for i := 0; i < len(rawArgs); i++ {
+		arg := rawArgs[i]
+		if !isFlag(arg) {
+			args = append(args, arg)
 			continue
 		}
-		if len(arg) > 2 && arg[0:2] == "--" {
-			eqIndex := -1
-			for j := 2; j < len(arg); j++ {
-				if arg[j] == '=' {
-					eqIndex = j
-					break
-				}
-			}
-			if eqIndex != -1 {
-				flagName := arg[2:eqIndex]
-				flagValue := arg[eqIndex+1:]
-				flags[flagName] = flagValue
-			} else if i+1 < len(rawArgs) {
-				flagName := arg[2:]
-				flagValue := rawArgs[i+1]
-				flags[flagName] = flagValue
-				skipNext = true
-			}
-		} else {
+
+		flag, err := parseFlag(arg)
+		if err != nil {
 			args = append(args, arg)
+			continue
 		}
+
+		flags[flag.Label] = flag
 	}
+
 	return flags, args
+}
+
+func isFlag(arg string) bool {
+	return len(arg) > 0 && strings.HasPrefix(arg, "--")
+}
+
+func parseFlag(arg string) (*Flag, error) {
+	if !isFlag(arg) {
+		return nil, fmt.Errorf("argument %q is not a flag", arg)
+	}
+
+	var label, value string
+	if eqIndex := strings.Index(arg, "="); eqIndex != -1 {
+		label = arg[2:eqIndex]
+		value = arg[eqIndex+1:]
+	} else {
+		label = arg[2:]
+		value = "true"
+	}
+
+	return NewFlag(label, value), nil
 }

@@ -15,7 +15,8 @@ func listCommand() *Command {
 	return NewCommand("list", "List all available tasks and their details").
 		SetHandler(NewHandler(
 			func(ctx *CommandContext, args *ValidatedArgs) error {
-				treeView := ctx.GetFlagOr("tree", false).(bool)
+				treeView := ctx.GetBoolFlag("tree")
+				logger.Debug("List command: tree view = %v", treeView)
 
 				if treeView {
 					printTaskTree(ctx.GetConfig())
