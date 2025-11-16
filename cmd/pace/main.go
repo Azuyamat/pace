@@ -8,10 +8,10 @@ import (
 	"azuyamat.dev/pace/internal/logger"
 )
 
-const CONFIG_FILE = "config.pace"
+const ConfigFile = "config.pace"
 
 func main() {
-	cfg, err := config.ParseFile(CONFIG_FILE)
+	cfg, err := config.ParseFile(ConfigFile)
 	if err != nil {
 		logger.Error("Error: %v", err)
 		return
