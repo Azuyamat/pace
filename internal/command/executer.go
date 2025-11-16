@@ -11,7 +11,7 @@ func Execute(raw []string, cfg *config.Config) error {
 	flags, args := extractFlags(raw)
 	logger.Debug("Extracted flags: %v, args: %v", flags, args)
 	ctx := NewCommandContext(cfg)
-	if len(raw) == 0 {
+	if len(args) == 0 {
 		return executeCommand("help", []string{}, ctx)
 	}
 	entryCommand := args[0]
