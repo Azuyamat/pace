@@ -105,6 +105,11 @@ func Error(format string, args ...interface{}) {
 	Default.Error(format, args...)
 }
 
+func Fatal(err error) error {
+	Default.Error("%v", err)
+	return err
+}
+
 func Warning(format string, args ...interface{}) {
 	Default.Warning(format, args...)
 }

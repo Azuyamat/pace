@@ -1,27 +1,48 @@
 package command
 
-import "azuyamat.dev/pace/internal/logger"
+import (
+	"fmt"
 
-func Help() {
-	logger.Println("Pace - A modern task runner")
-	logger.Println()
-	logger.Println("Usage:")
-	logger.Println("  pace <command> [arguments]")
-	logger.Println()
-	logger.Println("Commands:")
-	logger.Println("  run <task>         Run a specific task")
-	logger.Println("    --dry-run        Show what would be executed")
-	logger.Println("    --force          Force rebuild, ignoring cache")
-	logger.Println("  list               List all available tasks")
-	logger.Println("    --tree           Show task dependency tree")
-	logger.Println("  watch <task>       Watch task inputs and rerun on changes")
-	logger.Println("  <task>             Run task directly (shorthand for 'run')")
-	logger.Println("  help               Show this help message")
-	logger.Println()
-	logger.Println("Examples:")
-	logger.Println("  pace run build")
-	logger.Println("  pace build")
-	logger.Println("  pace run build --dry-run")
-	logger.Println("  pace list --tree")
-	logger.Println("  pace watch dev")
+	"azuyamat.dev/pace/internal/logger"
+)
+
+func init() {
+	CommandRegistry.Register(helpCommand())
+}
+
+func helpCommand() *Command {
+	return NewCommand("help", "Display help information").
+		Arg(NewStringArg("command", "Command to get help for", false)).
+		SetHandler(NewHandler(
+			func(ctx *CommandContext, args *ValidatedArgs) error {
+				commandName := args.StringOr("command", "")
+				logger.Debug("Help command invoked with argument: %s", commandName)
+				if commandName == "" {
+					logger.Info("Available commands:")
+					for _, cmd := range CommandRegistry.Commands() {
+						logger.Info("  %s: %s", cmd.Label, cmd.Description)
+					}
+					logger.Info("Use 'help <command>' to get more information about a specific command.")
+				} else {
+					cmd, exists := CommandRegistry.GetCommand(commandName)
+					if !exists {
+						return fmt.Errorf("command %q not found", commandName)
+					}
+					logger.Info("Help for command '%s':", cmd.Label)
+					logger.Info("Description: %s", cmd.Description)
+					if len(cmd.Args) > 0 {
+						logger.Info("Arguments:")
+						for _, arg := range cmd.Args {
+							req := "optional"
+							if arg.Required() {
+								req = "required"
+							}
+							logger.Info("  %s (%s): %s", arg.Label(), req, arg.Description())
+						}
+					} else {
+						logger.Info("This command has no arguments.")
+					}
+				}
+				return nil
+			}))
 }

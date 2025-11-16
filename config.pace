@@ -6,6 +6,9 @@ task "build" {
     description "Build the project"
     command "go build -o ${output} cmd/pace/main.go"
     before ["tidy", "test"]
+    
+    inputs ["**/*.go"]
+    outputs ["${output}"]
 }
 
 hook "tidy" {
