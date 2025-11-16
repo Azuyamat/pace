@@ -62,7 +62,7 @@ func (c *Command) validateAndParse(rawArgs []string) (*ValidatedArgs, error) {
 	for i, arg := range c.Args {
 		if i >= len(rawArgs) {
 			if arg.Required() {
-				return nil, fmt.Errorf("missing required argument %q for command %q", arg.Label, c.Label)
+				return nil, fmt.Errorf("missing required argument %q for command %q", arg.Label(), c.Label)
 			}
 			break
 		}
