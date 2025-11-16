@@ -16,8 +16,8 @@ func runCommand() *Command {
 				taskName := args.String("task")
 
 				runner := runner.NewRunner(ctx.GetConfig())
-				runner.DryRun = ctx.GetFlagOr("dry-run", false).(bool)
-				runner.Force = ctx.GetFlagOr("force", false).(bool)
+				runner.DryRun = ctx.GetBoolFlag("dry-run")
+				runner.Force = ctx.GetBoolFlag("force")
 
 				if err := runner.RunTask(taskName); err != nil {
 					return err
