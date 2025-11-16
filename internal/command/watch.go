@@ -8,6 +8,20 @@ import (
 	"azuyamat.dev/pace/internal/runner"
 )
 
+func init() {
+	CommandRegistry.Register(watchCommand())
+}
+
+func watchCommand() *Command {
+	return NewCommand("watch", "Watch a task's inputs and re-run it on changes").
+		Arg(NewStringArg("task", "Name of the task to watch", true)).
+		SetHandler(NewHandler(
+			func(ctx *CommandContext, args *ValidatedArgs) {
+				taskName := args.String("task")
+				Watch(ctx.GetConfig(), []string{taskName})
+			}))
+}
+
 func Watch(cfg *config.Config, args []string) {
 	if len(args) < 1 {
 		logger.Error("no task specified for watch mode")
