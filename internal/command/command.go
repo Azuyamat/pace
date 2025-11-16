@@ -2,7 +2,7 @@ package command
 
 import "fmt"
 
-type Handler func(ctx *CommandContext, args *ValidatedArgs)
+type Handler func(ctx *CommandContext, args *ValidatedArgs) error
 
 func NewHandler(f Handler) Handler {
 	return f
@@ -22,7 +22,9 @@ func NewCommand(label, description string) *Command {
 		Description: description,
 		Subcommands: []Command{},
 		Args:        Args{},
-		Handler:     func(ctx *CommandContext, args *ValidatedArgs) {},
+		Handler: func(ctx *CommandContext, args *ValidatedArgs) error {
+			return fmt.Errorf("no handler defined for command %q", label)
+		},
 	}
 }
 
@@ -47,7 +49,10 @@ func (c *Command) Execute(ctx *CommandContext, rawArgs []string) error {
 		return err
 	}
 
-	c.Handler(ctx, validated)
+	if err = c.Handler(ctx, validated); err != nil {
+		return err
+	}
+
 	return nil
 }
 

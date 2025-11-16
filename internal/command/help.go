@@ -1,6 +1,10 @@
 package command
 
-import "azuyamat.dev/pace/internal/logger"
+import (
+	"fmt"
+
+	"azuyamat.dev/pace/internal/logger"
+)
 
 func init() {
 	CommandRegistry.Register(helpCommand())
@@ -10,7 +14,7 @@ func helpCommand() *Command {
 	return NewCommand("help", "Display help information").
 		Arg(NewStringArg("command", "Command to get help for", false)).
 		SetHandler(NewHandler(
-			func(ctx *CommandContext, args *ValidatedArgs) {
+			func(ctx *CommandContext, args *ValidatedArgs) error {
 				commandName := args.StringOr("command", "")
 				logger.Debug("Help command invoked with argument: %s", commandName)
 				if commandName == "" {
@@ -22,8 +26,7 @@ func helpCommand() *Command {
 				} else {
 					cmd, exists := CommandRegistry.GetCommand(commandName)
 					if !exists {
-						logger.Error("Command '%s' not found.", commandName)
-						return
+						return fmt.Errorf("command %q not found", commandName)
 					}
 					logger.Info("Help for command '%s':", cmd.Label)
 					logger.Info("Description: %s", cmd.Description)
@@ -40,5 +43,6 @@ func helpCommand() *Command {
 						logger.Info("This command has no arguments.")
 					}
 				}
+				return nil
 			}))
 }

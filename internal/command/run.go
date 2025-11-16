@@ -1,9 +1,6 @@
 package command
 
 import (
-	"os"
-
-	"azuyamat.dev/pace/internal/logger"
 	"azuyamat.dev/pace/internal/runner"
 )
 
@@ -15,7 +12,7 @@ func runCommand() *Command {
 	return NewCommand("run", "Run a specified task").
 		Arg(NewStringArg("task", "Name of the task to run", true)).
 		SetHandler(NewHandler(
-			func(ctx *CommandContext, args *ValidatedArgs) {
+			func(ctx *CommandContext, args *ValidatedArgs) error {
 				taskName := args.String("task")
 
 				runner := runner.NewRunner(ctx.GetConfig())
@@ -23,8 +20,8 @@ func runCommand() *Command {
 				runner.Force = ctx.GetFlagOr("force", false).(bool)
 
 				if err := runner.RunTask(taskName); err != nil {
-					logger.Error("Error running task: %v", err)
-					os.Exit(1)
+					return err
 				}
+				return nil
 			}))
 }

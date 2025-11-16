@@ -14,7 +14,7 @@ func init() {
 func listCommand() *Command {
 	return NewCommand("list", "List all available tasks and their details").
 		SetHandler(NewHandler(
-			func(ctx *CommandContext, args *ValidatedArgs) {
+			func(ctx *CommandContext, args *ValidatedArgs) error {
 				treeView := ctx.GetFlagOr("tree", false).(bool)
 
 				if treeView {
@@ -22,6 +22,8 @@ func listCommand() *Command {
 				} else {
 					printTaskList(ctx.GetConfig())
 				}
+
+				return nil
 			}))
 }
 
