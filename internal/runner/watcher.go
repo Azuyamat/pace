@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -96,22 +97,7 @@ func (w *Watcher) expandPattern(pattern string) ([]string, error) {
 func containsDoublestar(pattern string) bool {
 	return len(pattern) >= 2 && (pattern[:2] == "**" ||
 		(len(pattern) >= 3 && pattern[len(pattern)-3:] == "/**") ||
-		contains(pattern, "/**/") || contains(pattern, "\\**\\"))
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr ||
-		(len(s) > len(substr) && (s[:len(substr)] == substr || s[len(s)-len(substr):] == substr ||
-			containsMiddle(s, substr))))
-}
-
-func containsMiddle(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
+		strings.Contains(pattern, "/**/") || strings.Contains(pattern, "\\**\\"))
 }
 
 func (w *Watcher) expandDoublestar(pattern string) ([]string, error) {
@@ -148,21 +134,21 @@ func (w *Watcher) expandDoublestar(pattern string) ([]string, error) {
 
 func splitPattern(pattern string) []string {
 	var parts []string
-	current := ""
+	var current strings.Builder
 
 	for i := 0; i < len(pattern); i++ {
 		if pattern[i] == '/' || pattern[i] == '\\' {
-			if current != "" {
-				parts = append(parts, current)
-				current = ""
+			if current.Len() > 0 {
+				parts = append(parts, current.String())
+				current.Reset()
 			}
 		} else {
-			current += string(pattern[i])
+			current.WriteByte(pattern[i])
 		}
 	}
 
-	if current != "" {
-		parts = append(parts, current)
+	if current.Len() > 0 {
+		parts = append(parts, current.String())
 	}
 
 	return parts
