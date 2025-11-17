@@ -24,6 +24,9 @@ jobs:
         with:
           go-version: '1.23'
 
+      - name: Install Snapcraft
+        run: sudo snap install snapcraft --classic
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
