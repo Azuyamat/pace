@@ -35,16 +35,16 @@ release:
   draft: false
   prerelease: auto
 
-snapcrafts:
-  - name: pace
-    summary: Task runner and build orchestration tool
-    description: |
-      Pace is a task runner that allows you to define, manage, and execute
-      tasks with dependencies, hooks, caching, and file watching.
-    grade: stable
-    confinement: classic
-    license: MIT
-    publish: true
+# snapcrafts:
+#   - name: pace
+#     summary: Task runner and build orchestration tool
+#     description: |
+#       Pace is a task runner that allows you to define, manage, and execute
+#       tasks with dependencies, hooks, caching, and file watching.
+#     grade: stable
+#     confinement: classic
+#     license: MIT
+#     publish: true
 
 nfpms:
   - package_name: pace
@@ -77,7 +77,13 @@ winget:
       - cli
       - golang
     repository:
-      owner: microsoft
+      owner: azuyamat
       name: winget-pkgs
       branch: "azuyamat-pace-{{.Version}}"
       token: "{{ .Env.WINGET_GITHUB_TOKEN }}"
+      pull_request:
+        enabled: true
+        base:
+          owner: microsoft
+          name: winget-pkgs
+          branch: master
