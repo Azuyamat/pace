@@ -3,7 +3,7 @@ package command
 import (
 	"fmt"
 
-	"azuyamat.dev/pace/internal/logger"
+	"github.com/azuyamat/pace/internal/logger"
 )
 
 func init() {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"azuyamat.dev/pace/internal/models"
+	"github.com/azuyamat/pace/internal/models"
 )
 
 type DependencyRunner struct {

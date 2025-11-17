@@ -3,8 +3,8 @@ package command
 import (
 	"sort"
 
-	"azuyamat.dev/pace/internal/config"
-	"azuyamat.dev/pace/internal/logger"
+	"github.com/azuyamat/pace/internal/config"
+	"github.com/azuyamat/pace/internal/logger"
 )
 
 func init() {

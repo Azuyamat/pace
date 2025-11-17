@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 
-	"azuyamat.dev/pace/internal/models"
+	"github.com/azuyamat/pace/internal/models"
 )
 
 func (pp *PropertyParser) ParseCache(task *models.Task) error {

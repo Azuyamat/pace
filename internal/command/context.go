@@ -1,6 +1,6 @@
 package command
 
-import "azuyamat.dev/pace/internal/config"
+import "github.com/azuyamat/pace/internal/config"
 
 type Flag struct {
 	Label string

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"azuyamat.dev/pace/internal/config"
-	"azuyamat.dev/pace/internal/logger"
+	"github.com/azuyamat/pace/internal/config"
+	"github.com/azuyamat/pace/internal/logger"
 )
 
 func Execute(raw []string, cfg *config.Config) error {

@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	"azuyamat.dev/pace/internal/logger"
+	"github.com/azuyamat/pace/internal/logger"
 	"github.com/fsnotify/fsnotify"
 )
 

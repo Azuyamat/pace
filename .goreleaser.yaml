@@ -1,0 +1,83 @@
+version: 2
+
+project_name: pace
+
+builds:
+  - main: ./cmd/pace
+    binary: pace
+    ldflags:
+      - -s -w
+    goos:
+      - windows
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+    name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  use: github-native
+
+release:
+  github:
+    owner: azuyamat
+    name: pace
+  draft: false
+  prerelease: auto
+
+snapcrafts:
+  - name: pace
+    summary: Task runner and build orchestration tool
+    description: |
+      Pace is a task runner that allows you to define, manage, and execute
+      tasks with dependencies, hooks, caching, and file watching.
+    grade: stable
+    confinement: classic
+    license: MIT
+    publish: true
+
+nfpms:
+  - package_name: pace
+    homepage: https://github.com/azuyamat/pace
+    description: Task runner and build orchestration tool
+    maintainer: Azuyamat <blaneyderek@gmail.com>
+    license: MIT
+    formats:
+      - deb
+
+winget:
+  - name: pace
+    publisher: Azuyamat
+    short_description: Task runner and build orchestration tool
+    license: MIT
+    publisher_url: https://github.com/azuyamat
+    publisher_support_url: https://github.com/azuyamat/pace/issues
+    package_identifier: Azuyamat.Pace
+    path: manifests/a/Azuyamat/Pace/{{.Version}}
+    commit_msg_template: "New version: Azuyamat.Pace version {{.Version}}"
+    homepage: https://github.com/azuyamat/pace
+    description: |
+      Pace is a task runner that allows you to define, manage, and execute
+      tasks with dependencies, hooks, caching, and file watching.
+    license_url: https://github.com/azuyamat/pace/blob/master/LICENSE
+    copyright: Azuyamat
+    tags:
+      - task-runner
+      - build-tool
+      - cli
+      - golang
+    repository:
+      owner: microsoft
+      name: winget-pkgs
+      branch: "azuyamat-pace-{{.Version}}"
+      token: "{{ .Env.WINGET_GITHUB_TOKEN }}"

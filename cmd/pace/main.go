@@ -3,9 +3,9 @@ package main
 import (
 	"os"
 
-	"azuyamat.dev/pace/internal/command"
-	"azuyamat.dev/pace/internal/config"
-	"azuyamat.dev/pace/internal/logger"
+	"github.com/azuyamat/pace/internal/command"
+	"github.com/azuyamat/pace/internal/config"
+	"github.com/azuyamat/pace/internal/logger"
 )
 
 const ConfigFile = "config.pace"

@@ -3,8 +3,8 @@ package command
 import (
 	"fmt"
 
-	"azuyamat.dev/pace/internal/config"
-	"azuyamat.dev/pace/internal/runner"
+	"github.com/azuyamat/pace/internal/config"
+	"github.com/azuyamat/pace/internal/runner"
 )
 
 func init() {

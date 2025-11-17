@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"azuyamat.dev/pace/internal/models"
+	"github.com/azuyamat/pace/internal/models"
 )
 
 type Config struct {

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"azuyamat.dev/pace/internal/models"
+	"github.com/azuyamat/pace/internal/models"
 )
 
 type Executor struct {

@@ -1,4 +1,4 @@
-module azuyamat.dev/pace
+module github.com/azuyamat/pace
 
 go 1.23.2
 

@@ -1,7 +1,7 @@
 package command
 
 import (
-	"azuyamat.dev/pace/internal/runner"
+	"github.com/azuyamat/pace/internal/runner"
 )
 
 func init() {
