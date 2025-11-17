@@ -26,7 +26,11 @@ checksum:
   name_template: "checksums.txt"
 
 changelog:
-  use: github-native
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
 
 release:
   github:
