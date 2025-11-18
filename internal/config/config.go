@@ -17,6 +17,12 @@ type Config struct {
 	Imports     []string
 }
 
+var ConfigFile = "config.pace"
+
+func GetConfig() (*Config, error) {
+	return ParseFile(ConfigFile)
+}
+
 func ParseFile(path string) (*Config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {

@@ -3,29 +3,35 @@ package command
 import (
 	"sort"
 
+	gear "github.com/azuyamat/gear/command"
 	"github.com/azuyamat/pace/internal/config"
 	"github.com/azuyamat/pace/internal/logger"
 )
 
+var listCommand = gear.NewExecutableCommand("list", "List all available tasks and their details").
+	Flags(
+		gear.NewBoolFlag("tree", "t", "Display tasks in a tree view showing dependencies", false)).
+	Handler(listHandler)
+
 func init() {
-	CommandRegistry.Register(listCommand())
+	RootCommand.AddChild(listCommand)
 }
 
-func listCommand() *Command {
-	return NewCommand("list", "List all available tasks and their details").
-		SetHandler(NewHandler(
-			func(ctx *CommandContext, args *ValidatedArgs) error {
-				treeView := ctx.GetBoolFlag("tree")
-				logger.Debug("List command: tree view = %v", treeView)
+func listHandler(ctx *gear.Context, args gear.ValidatedArgs) error {
+	config, err := config.GetConfig()
+	if err != nil {
+		return err
+	}
+	treeView := args.Bool("tree")
+	logger.Debug("List command: tree view = %v", treeView)
 
-				if treeView {
-					printTaskTree(ctx.GetConfig())
-				} else {
-					printTaskList(ctx.GetConfig())
-				}
+	if treeView {
+		printTaskTree(config)
+	} else {
+		printTaskList(config)
+	}
 
-				return nil
-			}))
+	return nil
 }
 
 func printTaskList(cfg *config.Config) {

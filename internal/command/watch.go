@@ -3,22 +3,27 @@ package command
 import (
 	"fmt"
 
+	gear "github.com/azuyamat/gear/command"
 	"github.com/azuyamat/pace/internal/config"
 	"github.com/azuyamat/pace/internal/runner"
 )
 
+var watchCommand = gear.NewExecutableCommand("watch", "Watch a task's inputs and re-run it on changes").
+	Args(
+		gear.NewStringArg("task", "Name of the task to watch")).
+	Handler(watchHandler)
+
 func init() {
-	CommandRegistry.Register(watchCommand())
+	RootCommand.AddChild(watchCommand)
 }
 
-func watchCommand() *Command {
-	return NewCommand("watch", "Watch a task's inputs and re-run it on changes").
-		Arg(NewStringArg("task", "Name of the task to watch", true)).
-		SetHandler(NewHandler(
-			func(ctx *CommandContext, args *ValidatedArgs) error {
-				taskName := args.String("task")
-				return Watch(ctx.GetConfig(), []string{taskName})
-			}))
+func watchHandler(ctx *gear.Context, args gear.ValidatedArgs) error {
+	config, err := config.GetConfig()
+	if err != nil {
+		return err
+	}
+	taskName := args.String("task")
+	return Watch(config, []string{taskName})
 }
 
 func Watch(cfg *config.Config, args []string) error {
