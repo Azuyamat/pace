@@ -1,27 +1,26 @@
 package command
 
 import (
+	gear "github.com/azuyamat/gear/command"
+	"github.com/azuyamat/pace/internal/config"
 	"github.com/azuyamat/pace/internal/runner"
 )
 
+var runCommand = gear.NewExecutableCommand("run", "Run a specified task").
+	Args(
+		gear.NewStringArg("task", "Name of the task to run")).
+	Handler(runHandler)
+
 func init() {
-	CommandRegistry.Register(runCommand())
+	RootCommand.AddChild(runCommand)
 }
 
-func runCommand() *Command {
-	return NewCommand("run", "Run a specified task").
-		Arg(NewStringArg("task", "Name of the task to run", true)).
-		SetHandler(NewHandler(
-			func(ctx *CommandContext, args *ValidatedArgs) error {
-				taskName := args.String("task")
-
-				runner := runner.NewRunner(ctx.GetConfig())
-				runner.DryRun = ctx.GetBoolFlag("dry-run")
-				runner.Force = ctx.GetBoolFlag("force")
-
-				if err := runner.RunTask(taskName); err != nil {
-					return err
-				}
-				return nil
-			}))
+func runHandler(ctx *gear.Context, args gear.ValidatedArgs) error {
+	config, err := config.GetConfig()
+	if err != nil {
+		return err
+	}
+	taskName := args.String("task")
+	runner := runner.NewRunner(config)
+	return runner.RunTask(taskName)
 }
