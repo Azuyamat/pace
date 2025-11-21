@@ -22,8 +22,7 @@ func listHandler(ctx *gear.Context, args gear.ValidatedArgs) error {
 	if err != nil {
 		return err
 	}
-	treeView := args.Bool("tree")
-	logger.Debug("List command: tree view = %v", treeView)
+	treeView := args.FlagBool("tree")
 
 	if treeView {
 		printTaskTree(config)
