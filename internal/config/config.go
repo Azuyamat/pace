@@ -34,46 +34,10 @@ func ParseFile(path string) (*Config, error) {
 		return nil, err
 	}
 
-	// Process imports
-	if len(cfg.Imports) > 0 {
-		baseDir := filepath.Dir(path)
-		for _, importPath := range cfg.Imports {
-			fullPath := filepath.Join(baseDir, importPath)
-			importedCfg, err := ParseFile(fullPath)
-			if err != nil {
-				return nil, err
-			}
-
-			// Merge imported config
-			for name, task := range importedCfg.Tasks {
-				if _, exists := cfg.Tasks[name]; !exists {
-					cfg.Tasks[name] = task
-				}
-			}
-			for name, hook := range importedCfg.Hooks {
-				if _, exists := cfg.Hooks[name]; !exists {
-					cfg.Hooks[name] = hook
-				}
-			}
-			for name, value := range importedCfg.Constants {
-				if _, exists := cfg.Constants[name]; !exists {
-					cfg.Constants[name] = value
-				}
-			}
-			for name, value := range importedCfg.Globals {
-				if _, exists := cfg.Globals[name]; !exists {
-					cfg.Globals[name] = value
-				}
-			}
-			for name, value := range importedCfg.Aliases {
-				if _, exists := cfg.Aliases[name]; !exists {
-					cfg.Aliases[name] = value
-				}
-			}
-		}
+	if err := processImports(cfg, filepath.Dir(path)); err != nil {
+		return nil, err
 	}
 
-	// Resolve variables
 	resolver := NewResolver(cfg)
 	for name, task := range cfg.Tasks {
 		task.Command = resolver.ResolveString(task.Command)
@@ -96,4 +60,47 @@ func ParseFile(path string) (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func (cfg *Config) GetTask(name string) (models.Task, bool) {
+	task, exists := cfg.Tasks[name]
+	return task, exists
+}
+
+func (cfg *Config) GetTaskOrDefault(name string) (models.Task, bool) {
+	if name == "" && cfg.DefaultTask != "" {
+		name = cfg.DefaultTask
+	}
+	return cfg.GetTask(name)
+}
+
+func (cfg *Config) GetHook(name string) (models.Hook, bool) {
+	hook, exists := cfg.Hooks[name]
+	return hook, exists
+}
+
+func processImports(cfg *Config, baseDir string) error {
+	for _, importPath := range cfg.Imports {
+		fullPath := filepath.Join(baseDir, importPath)
+		importedCfg, err := ParseFile(fullPath)
+		if err != nil {
+			return err
+		}
+
+		importField(importedCfg.Tasks, cfg.Tasks)
+		importField(importedCfg.Hooks, cfg.Hooks)
+		importField(importedCfg.Constants, cfg.Constants)
+		importField(importedCfg.Globals, cfg.Globals)
+		importField(importedCfg.Aliases, cfg.Aliases)
+	}
+
+	return nil
+}
+
+func importField[T any](src, dest map[string]T) {
+	for name, value := range src {
+		if _, exists := dest[name]; !exists {
+			dest[name] = value
+		}
+	}
 }

@@ -1,4 +1,5 @@
 default "build"
+import "extra.pace"
 
 set "output" "bin/pace"
 
@@ -19,4 +20,10 @@ hook "tidy" {
 hook "test" {
     description "Run tests"
     command "go test ./..."
+}
+
+task "ts" {
+	command "echo 'This is a task named ts'"
+	dependencies ["extra"]
+	description "task ts description"
 }

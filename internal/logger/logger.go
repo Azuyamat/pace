@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+	"os"
 	"time"
 )
 
@@ -17,12 +18,25 @@ const (
 	colorWhite  = "\033[97m"
 )
 
+type LogLevel int
+
+const (
+	LevelInfo LogLevel = iota
+	LevelWarning
+	LevelError
+	LevelDebug
+)
+
 type Logger struct {
 	enabled bool
+	level   LogLevel
 }
 
 func New() *Logger {
-	return &Logger{enabled: true}
+	if os.Getenv("PACE_DEBUG") == "true" {
+		return &Logger{enabled: true, level: LevelDebug}
+	}
+	return &Logger{enabled: true, level: LevelInfo}
 }
 
 func (l *Logger) SetEnabled(enabled bool) {
@@ -34,7 +48,7 @@ func (l *Logger) timestamp() string {
 }
 
 func (l *Logger) Info(format string, args ...interface{}) {
-	if !l.enabled {
+	if !l.enabled || l.level > LevelInfo {
 		return
 	}
 	msg := fmt.Sprintf(format, args...)
@@ -42,7 +56,7 @@ func (l *Logger) Info(format string, args ...interface{}) {
 }
 
 func (l *Logger) Success(format string, args ...interface{}) {
-	if !l.enabled {
+	if !l.enabled || l.level > LevelInfo {
 		return
 	}
 	msg := fmt.Sprintf(format, args...)
@@ -50,12 +64,15 @@ func (l *Logger) Success(format string, args ...interface{}) {
 }
 
 func (l *Logger) Error(format string, args ...interface{}) {
+	if !l.enabled || l.level > LevelError {
+		return
+	}
 	msg := fmt.Sprintf(format, args...)
 	fmt.Printf("%s %s✗%s %s\n", l.timestamp(), colorRed, colorReset, msg)
 }
 
 func (l *Logger) Warning(format string, args ...interface{}) {
-	if !l.enabled {
+	if !l.enabled || l.level > LevelWarning {
 		return
 	}
 	msg := fmt.Sprintf(format, args...)
@@ -63,7 +80,7 @@ func (l *Logger) Warning(format string, args ...interface{}) {
 }
 
 func (l *Logger) Task(format string, args ...interface{}) {
-	if !l.enabled {
+	if !l.enabled || l.level > LevelInfo {
 		return
 	}
 	msg := fmt.Sprintf(format, args...)
@@ -71,7 +88,7 @@ func (l *Logger) Task(format string, args ...interface{}) {
 }
 
 func (l *Logger) Debug(format string, args ...interface{}) {
-	if !l.enabled {
+	if !l.enabled || l.level != LevelDebug {
 		return
 	}
 	msg := fmt.Sprintf(format, args...)

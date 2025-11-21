@@ -1,6 +1,8 @@
 package command
 
 import (
+	"fmt"
+
 	gear "github.com/azuyamat/gear/command"
 	"github.com/azuyamat/pace/internal/config"
 	"github.com/azuyamat/pace/internal/runner"
@@ -22,5 +24,15 @@ func runHandler(ctx *gear.Context, args gear.ValidatedArgs) error {
 	}
 	taskName := args.String("task")
 	runner := runner.NewRunner(config)
-	return runner.RunTask(taskName)
+
+	task, exists := config.GetTaskOrDefault(taskName)
+	if !exists {
+		return fmt.Errorf("task '%s' not found", taskName)
+	}
+
+	if task.Watch {
+		return Watch(config, []string{taskName})
+	}
+
+	return runner.RunTask(task)
 }
