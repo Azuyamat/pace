@@ -12,22 +12,23 @@ import (
 	"time"
 
 	"github.com/azuyamat/pace/internal/logger"
+	"github.com/azuyamat/pace/internal/models"
 	"github.com/fsnotify/fsnotify"
 )
 
 type Watcher struct {
 	runner     *Runner
-	taskName   string
+	task       models.Task
 	patterns   []string
 	log        *logger.Logger
 	cancelFunc context.CancelFunc
 	taskMu     sync.Mutex
 }
 
-func NewWatcher(runner *Runner, taskName string, patterns []string) *Watcher {
+func NewWatcher(runner *Runner, task models.Task, patterns []string) *Watcher {
 	return &Watcher{
 		runner:   runner,
-		taskName: taskName,
+		task:     task,
 		patterns: patterns,
 		log:      logger.New(),
 	}
@@ -254,7 +255,7 @@ func (w *Watcher) resetDebounce(debounce *time.Timer) {
 }
 
 func (w *Watcher) runTask() {
-	if err := w.runner.RunTask(w.taskName); err != nil {
+	if err := w.runner.RunTask(w.task); err != nil {
 		w.log.Error("%v", err)
 	}
 }
@@ -279,7 +280,7 @@ func (w *Watcher) runTaskAsync(done chan<- struct{}) {
 	w.log.Debug("Starting task in goroutine...")
 	errChan := make(chan error, 1)
 	go func() {
-		err := w.runner.RunTask(w.taskName)
+		err := w.runner.RunTask(w.task)
 		w.log.Debug("Task goroutine finished with err: %v", err)
 		errChan <- err
 	}()

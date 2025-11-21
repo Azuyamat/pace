@@ -47,7 +47,7 @@ func Watch(cfg *config.Config, args []string) error {
 	}
 
 	r := runner.NewRunner(cfg)
-	w := runner.NewWatcher(r, taskName, task.Inputs)
+	w := runner.NewWatcher(r, task, task.Inputs)
 
 	if err := w.Watch(); err != nil {
 		return err

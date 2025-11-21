@@ -76,30 +76,33 @@ func (r *Runner) validateAndSetArgs(task *models.Task, extraArgs []string) error
 	return nil
 }
 
-func (r *Runner) RunTask(taskName string, extraArgs ...string) error {
-	task, exists := r.Config.Tasks[taskName]
-	if !exists {
-		return fmt.Errorf("task %q not found", taskName)
-	}
-
+func (r *Runner) RunTask(task models.Task, extraArgs ...string) error {
 	if err := r.validateAndSetArgs(&task, extraArgs); err != nil {
 		return err
 	}
 
 	r.mu.Lock()
-	if r.completed[taskName] {
+	if r.completed[task.Name] {
 		r.mu.Unlock()
 		return nil
 	}
-	if r.running[taskName] {
+	if r.running[task.Name] {
 		r.mu.Unlock()
-		return fmt.Errorf("circular dependency detected for task %q", taskName)
+		return fmt.Errorf("circular dependency detected for task %q", task.Name)
 	}
-	r.running[taskName] = true
+	r.running[task.Name] = true
 	r.mu.Unlock()
 
 	if len(task.Dependencies) > 0 {
-		if err := r.dependencyRunner.RunDependencies(&task, task.Dependencies); err != nil {
+		dependencies := make([]models.Task, 0, len(task.Dependencies))
+		for _, depName := range task.Dependencies {
+			depTask, exists := r.Config.GetTask(depName)
+			if !exists {
+				return fmt.Errorf("dependency task %q not found for task %q", depName, task.Name)
+			}
+			dependencies = append(dependencies, depTask)
+		}
+		if err := r.dependencyRunner.RunDependencies(&task, dependencies); err != nil {
 			return err
 		}
 	}
@@ -109,18 +112,18 @@ func (r *Runner) RunTask(taskName string, extraArgs ...string) error {
 		needsRun = true
 	} else {
 		var err error
-		needsRun, err = r.needsRerun(taskName)
+		needsRun, err = r.needsRerun(task.Name)
 		if err != nil {
-			return fmt.Errorf("failed to check cache for task %q: %v", taskName, err)
+			return fmt.Errorf("failed to check cache for task %q: %v", task.Name, err)
 		}
 
 		if !needsRun {
 			if !task.Silent {
-				r.log.Info("Task %q is up to date (cache hit)", taskName)
+				r.log.Info("Task %q is up to date (cache hit)", task.Name)
 			}
 			r.mu.Lock()
-			r.completed[taskName] = true
-			r.running[taskName] = false
+			r.completed[task.Name] = true
+			r.running[task.Name] = false
 			r.mu.Unlock()
 			return nil
 		}
@@ -132,7 +135,7 @@ func (r *Runner) RunTask(taskName string, extraArgs ...string) error {
 			// Arguments provided but not used in command
 			r.log.Warning("[DRY RUN] Extra arguments provided but command has no placeholders ($@, $1, $2, etc.): %v", task.ExtraArgs)
 		}
-		r.log.Debug("[DRY RUN] Would execute task %q: %s", taskName, cmdStr)
+		r.log.Debug("[DRY RUN] Would execute task %q: %s", task.Name, cmdStr)
 		if len(task.BeforeHooks) > 0 {
 			r.log.Debug("[DRY RUN] Would run before hooks: %v", task.BeforeHooks)
 		}
@@ -143,8 +146,8 @@ func (r *Runner) RunTask(taskName string, extraArgs ...string) error {
 			r.log.Debug("[DRY RUN] Would run on_success hooks: %v", task.OnSuccess)
 		}
 		r.mu.Lock()
-		r.completed[taskName] = true
-		r.running[taskName] = false
+		r.completed[task.Name] = true
+		r.running[task.Name] = false
 		r.mu.Unlock()
 		return nil
 	}
@@ -155,7 +158,7 @@ func (r *Runner) RunTask(taskName string, extraArgs ...string) error {
 	for attempt := 0; attempt <= task.Retry; attempt++ {
 		if attempt > 0 {
 			if !task.Silent {
-				r.log.Warning("Retrying task %q (attempt %d/%d)...", taskName, attempt, task.Retry)
+				r.log.Warning("Retrying task %q (attempt %d/%d)...", task.Name, attempt, task.Retry)
 			}
 			if task.RetryDelay != "" {
 				delay, err := time.ParseDuration(task.RetryDelay)
@@ -172,10 +175,10 @@ func (r *Runner) RunTask(taskName string, extraArgs ...string) error {
 			return r.hookExecutor.ExecuteHooks(hooks)
 		}
 		updateCacheFunc := func() error {
-			return r.updateCache(taskName)
+			return r.updateCache(task.Name)
 		}
 
-		execErr = r.executor.ExecuteTask(taskName, &task, beforeHookFunc, afterHookFunc, updateCacheFunc)
+		execErr = r.executor.ExecuteTask(task.Name, &task, beforeHookFunc, afterHookFunc, updateCacheFunc)
 		if execErr == nil {
 			break
 		}
@@ -201,8 +204,8 @@ func (r *Runner) RunTask(taskName string, extraArgs ...string) error {
 	}
 
 	r.mu.Lock()
-	r.completed[taskName] = true
-	r.running[taskName] = false
+	r.completed[task.Name] = true
+	r.running[task.Name] = false
 	r.mu.Unlock()
 
 	return nil

@@ -8,18 +8,18 @@ import (
 )
 
 type DependencyRunner struct {
-	runTask func(string, ...string) error
+	runTask func(task models.Task, extraArgs ...string) error
 	log     taskLogger
 }
 
-func NewDependencyRunner(runTask func(string, ...string) error, log taskLogger) *DependencyRunner {
+func NewDependencyRunner(runTask func(models.Task, ...string) error, log taskLogger) *DependencyRunner {
 	return &DependencyRunner{
 		runTask: runTask,
 		log:     log,
 	}
 }
 
-func (dr *DependencyRunner) RunDependencies(task *models.Task, dependencies []string) error {
+func (dr *DependencyRunner) RunDependencies(task *models.Task, dependencies []models.Task) error {
 	if !task.Parallel {
 		for _, dep := range dependencies {
 			if err := dr.runTask(dep); err != nil {
@@ -36,9 +36,9 @@ func (dr *DependencyRunner) RunDependencies(task *models.Task, dependencies []st
 
 	for _, dep := range dependencies {
 		wg.Add(1)
-		go func(depName string) {
+		go func(dep models.Task) {
 			defer wg.Done()
-			if err := dr.runTask(depName); err != nil {
+			if err := dr.runTask(dep); err != nil {
 				if !task.ContinueOnError {
 					errChan <- err
 				}
