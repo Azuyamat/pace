@@ -159,7 +159,7 @@ func replaceExecutable(url string) error {
 	}
 	defer os.Remove(archive)
 
-	binary, err := extractBinary(archive)
+	binary, err := extractBinary(archive, url)
 	if err != nil {
 		return err
 	}
@@ -204,8 +204,8 @@ func downloadFile(url string) (string, error) {
 	return tmp.Name(), nil
 }
 
-func extractBinary(archive string) ([]byte, error) {
-	if strings.HasSuffix(archive, ".zip") {
+func extractBinary(archive string, url string) ([]byte, error) {
+	if strings.HasSuffix(url, ".zip") {
 		return extractFromZip(archive)
 	}
 	return extractFromTarGz(archive)
