@@ -11,7 +11,7 @@ const sidebars = {
     {
       type: 'category',
       label: 'Commands',
-      items: ['commands/run', 'commands/watch', 'commands/list'],
+      items: ['commands/run', 'commands/watch', 'commands/list', 'commands/update', 'commands/version'],
     },
     'examples',
   ],
