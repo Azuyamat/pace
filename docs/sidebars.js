@@ -7,11 +7,13 @@ const sidebars = {
       label: 'Getting Started',
       items: ['installation', 'quick-start'],
     },
+    'configuration',
     {
       type: 'category',
       label: 'Commands',
-      items: ['commands/add', 'commands/list', 'commands/complete', 'commands/delete'],
+      items: ['commands/run', 'commands/watch', 'commands/list'],
     },
+    'examples',
   ],
 };
 

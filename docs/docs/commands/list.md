@@ -1,6 +1,6 @@
 # pace list
 
-Display all your tasks.
+Display all available tasks, hooks, and aliases from your `config.pace` file.
 
 ## Usage
 
@@ -10,46 +10,84 @@ pace list [flags]
 
 ## Flags
 
-- `--tree` - Display tasks in a tree view format (default: true)
+- `--tree`, `-t` - Display tasks in a tree view showing dependencies (default: false)
 
 ## Examples
 
-### List all tasks (tree view)
+### List all tasks
 
 ```bash
 pace list
 ```
 
-### List all tasks with explicit tree flag
+Example output:
+```
+Available tasks:
+
+  build                Build the application (default)
+  test                 Run all tests
+  deploy               Deploy to production
+
+Aliases:
+  b                    -> build
+  t                    -> test
+
+Available hooks:
+  format               Format code
+  lint                 Run linter
+```
+
+### List with dependency tree
 
 ```bash
 pace list --tree
 ```
 
-### List without tree view
+Example output:
+```
+Task dependency tree:
+
+build (default)
+  ├── test
+  └── lint
+
+deploy
+  └── build
+      ├── test
+      └── lint
+```
+
+### Short flag version
 
 ```bash
-pace list --tree=false
+pace list -t
 ```
 
 ## Output Format
 
+### Simple List (default)
+
+The default view shows three sections:
+
+1. **Available tasks**: All defined tasks with their descriptions
+   - Tasks marked `(default)` will run when you execute `pace run` without arguments
+   - If no description is provided, the command is shown instead
+
+2. **Aliases**: Shortcuts to tasks (if any defined)
+
+3. **Available hooks**: Reusable hooks that can be referenced by tasks
+
 ### Tree View
 
-When using tree view, tasks are displayed with:
-- Task ID
-- Completion status (✓ for completed)
-- Task name
-
-Example output:
-```
-├── [1] ✓ Task 1
-├── [2] Task 2
-└── [3] Task 3
-```
+The tree view shows:
+- Task names with their dependencies
+- Visual tree structure showing the execution order
+- Default task indicator
+- Circular dependency detection (marked as "circular")
 
 ## Notes
 
-- Completed tasks are marked with a checkmark (✓)
-- Tasks are displayed in the order they were added
-- The tree view provides a clean, visual representation of your task list
+- Tasks are displayed in alphabetical order
+- The default task is marked with `(default)`
+- Tree view helps visualize complex dependency chains
+- Circular dependencies are detected and marked to prevent infinite loops

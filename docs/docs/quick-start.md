@@ -2,81 +2,181 @@
 
 This guide will help you get started with Pace in just a few minutes.
 
-## Your First Task
+## Create Your First Configuration
 
-Let's add your first task:
+Create a file named `config.pace` in your project root:
 
-```bash
-pace add "Learn how to use Pace"
+```pace
+# Set the default task
+default build
+
+# Define a build task
+task build {
+    description "Build the application"
+    command "go build -o bin/app main.go"
+    inputs ["**/*.go"]
+    outputs ["bin/app"]
+    cache true
+}
+
+# Define a test task
+task test {
+    description "Run tests"
+    command "go test ./..."
+}
 ```
 
-You should see a confirmation that your task was added successfully.
+## Run Your First Task
 
-## Viewing Your Tasks
+Run the default task (build):
 
-To see all your tasks:
+```bash
+pace run
+```
+
+Or run a specific task:
+
+```bash
+pace run test
+```
+
+## List Available Tasks
+
+See all available tasks and their descriptions:
 
 ```bash
 pace list
 ```
 
-For a tree view (default):
+For a tree view showing dependencies:
 
 ```bash
 pace list --tree
 ```
 
-## Completing Tasks
+## Add Dependencies
 
-When you finish a task, mark it as complete:
+Tasks can depend on other tasks:
 
-```bash
-pace complete 1
+```pace
+task build {
+    description "Build the application"
+    command "go build -o bin/app main.go"
+    before ["test"]  # Run test before build
+}
+
+task test {
+    description "Run tests"
+    command "go test ./..."
+}
+
+task deploy {
+    description "Deploy to production"
+    command "./scripts/deploy.sh"
+    before ["build"]  # Run build before deploy
+}
 ```
 
-Replace `1` with the ID of the task you want to complete.
+Now when you run `pace run deploy`, it will automatically run: test → build → deploy
 
-## Deleting Tasks
+## Use Variables
 
-To remove a task entirely:
+Define reusable values:
+
+```pace
+# Define variables
+var output = "bin/myapp"
+var version = "1.0.0"
+
+task build {
+    command "go build -ldflags '-X main.Version=${version}' -o ${output} main.go"
+}
+```
+
+## Watch for Changes
+
+Automatically re-run tasks when files change:
 
 ```bash
-pace delete 1
+pace watch build
+```
+
+This will monitor all files matching the task's `inputs` patterns and re-execute when changes are detected.
+
+## Add Task Aliases
+
+Create shortcuts for frequently used tasks:
+
+```pace
+alias b build
+alias t test
+alias d deploy
+```
+
+Now you can run:
+
+```bash
+pace run b    # same as: pace run build
+pace run t    # same as: pace run test
 ```
 
 ## Common Workflows
 
-### Daily Task Management
+### Development Workflow
 
-```bash
-# Start your day by listing tasks
-pace list
+```pace
+default dev
 
-# Add new tasks as they come up
-pace add "Review pull requests"
-pace add "Update documentation"
+task dev {
+    description "Start development server"
+    command "go run main.go"
+    before ["build"]
+}
 
-# Complete tasks as you finish them
-pace complete 1
-pace complete 2
+task build {
+    description "Build the project"
+    command "go build -o bin/app main.go"
+    inputs ["**/*.go"]
+    cache true
+}
 
-# End of day - check what's left
-pace list
+task test {
+    description "Run tests"
+    command "go test -v ./..."
+}
+
+alias t test
 ```
 
-### Project-Based Tasks
+### Build and Test Pipeline
 
-```bash
-# Add project tasks with descriptive names
-pace add "Setup database schema"
-pace add "Implement user authentication"
-pace add "Write unit tests"
+```pace
+default all
 
-# View in tree format
-pace list --tree
+task all {
+    description "Run full pipeline"
+    before ["lint", "test", "build"]
+}
+
+task lint {
+    description "Run linter"
+    command "golangci-lint run"
+}
+
+task test {
+    description "Run tests"
+    command "go test ./..."
+}
+
+task build {
+    description "Build application"
+    command "go build -o bin/app main.go"
+    cache true
+}
 ```
 
 ## Next Steps
 
-- Learn about all available [commands](commands/add.md)
-- Explore advanced features in the command reference
+- [Configuration Reference](configuration.md) - Learn about all configuration options
+- [Commands Reference](commands/list.md) - Explore all available commands
+- [Examples](examples.md) - See more practical examples
