@@ -27,6 +27,10 @@ func (p *Parser) parseTopLevelStatement(config *Config) error {
 		return p.parseGlobal(config)
 	}
 
+	if p.currentToken.IsKeyword("var") {
+		return p.parseVar(config)
+	}
+
 	if p.currentToken.IsKeyword("set") {
 		return p.parseSet(config)
 	}
@@ -109,13 +113,42 @@ func (p *Parser) parseSet(config *Config) error {
 	return nil
 }
 
-func (p *Parser) parseDefault(config *Config) error {
+func (p *Parser) parseVar(config *Config) error {
 	p.advance()
+
+	if p.currentToken.Type != TOKEN_IDENTIFIER {
+		return p.createError(
+			fmt.Sprintf("Expected variable name but got %s", p.currentToken.Type.String()),
+		).WithContext("Parsing var statement").WithHint("Variable names must be identifiers, e.g., var output = \"bin/app\"")
+	}
+	name := p.currentToken.Literal
+	p.advance()
+
+	if err := p.expect(TOKEN_EQUALS); err != nil {
+		return p.createError(
+			fmt.Sprintf("Expected '=' after variable name but got %s", p.currentToken.Type.String()),
+		).WithContext("Parsing var statement").WithHint("Variables use the syntax: var NAME = \"value\"")
+	}
 
 	if p.currentToken.Type != TOKEN_STRING {
 		return p.createError(
-			fmt.Sprintf("Expected default task name (string) but got %s", p.currentToken.Type.String()),
-		).WithContext("Parsing default statement").WithHint("Default task name must be a string, e.g., default \"build\"")
+			fmt.Sprintf("Expected variable value (string) but got %s", p.currentToken.Type.String()),
+		).WithContext("Parsing var statement").WithHint("Variable values must be strings")
+	}
+	value := p.currentToken.Literal
+	p.advance()
+
+	config.Constants[name] = value
+	return nil
+}
+
+func (p *Parser) parseDefault(config *Config) error {
+	p.advance()
+
+	if p.currentToken.Type != TOKEN_IDENTIFIER {
+		return p.createError(
+			fmt.Sprintf("Expected default task name (identifier) but got %s", p.currentToken.Type.String()),
+		).WithContext("Parsing default statement").WithHint("Default task name must be an identifier, e.g., default build")
 	}
 	config.DefaultTask = p.currentToken.Literal
 	p.advance()
@@ -125,18 +158,18 @@ func (p *Parser) parseDefault(config *Config) error {
 func (p *Parser) parseAlias(config *Config) error {
 	p.advance()
 
-	if p.currentToken.Type != TOKEN_STRING {
+	if p.currentToken.Type != TOKEN_IDENTIFIER {
 		return p.createError(
-			fmt.Sprintf("Expected alias name (string) but got %s", p.currentToken.Type.String()),
-		).WithContext("Parsing alias statement").WithHint("Alias names must be strings, e.g., alias \"b\" \"build\"")
+			fmt.Sprintf("Expected alias name (identifier) but got %s", p.currentToken.Type.String()),
+		).WithContext("Parsing alias statement").WithHint("Alias names must be identifiers, e.g., alias b build")
 	}
 	aliasName := p.currentToken.Literal
 	p.advance()
 
-	if p.currentToken.Type != TOKEN_STRING {
+	if p.currentToken.Type != TOKEN_IDENTIFIER {
 		return p.createError(
-			fmt.Sprintf("Expected task name (string) but got %s", p.currentToken.Type.String()),
-		).WithContext("Parsing alias statement").WithHint("Task names must be strings, e.g., alias \"b\" \"build\"")
+			fmt.Sprintf("Expected task name (identifier) but got %s", p.currentToken.Type.String()),
+		).WithContext("Parsing alias statement").WithHint("Task names must be identifiers, e.g., alias b build")
 	}
 	taskName := p.currentToken.Literal
 	p.advance()

@@ -1,28 +1,33 @@
-default "build"
+default build
 import "extra.pace"
 
-set "output" "bin/pace"
+var output = "bin/pace"
 
-task "build" {
+task build {
+	command "go build -o ${output} cmd/pace/main.go"
     description "Build the project"
-    command "go build -o ${output} cmd/pace/main.go"
+
     before ["tidy", "test"]
+	after ["tidy"]
     
     inputs ["**/*.go"]
     outputs ["${output}"]
+
+	retry 2
+	retry_delay "3s"
 }
 
-hook "tidy" {
+hook tidy {
     description "Format the code"
     command "gofmt -s -w ."
 }
 
-hook "test" {
+hook test {
     description "Run tests"
     command "go test ./..."
 }
 
-task "ts" {
+task ts {
 	command "echo 'This is a task named ts'"
 	dependencies ["extra"]
 	description "task ts description"

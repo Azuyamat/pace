@@ -54,9 +54,9 @@ Download the appropriate binary for your platform from the [releases page](https
 Create a `config.pace` file in your project root:
 
 ```pace
-default "build"
+default build
 
-task "build" {
+task build {
     description "Build the project"
     command "go build -o bin/app main.go"
     before ["test"]
@@ -89,10 +89,10 @@ pace run build
 Define reusable values:
 
 ```pace
-set "output" "bin/myapp"
-set "version" "1.0.0"
+var output = "bin/myapp"
+var version = "1.0.0"
 
-task "build" {
+task build {
     command "go build -ldflags '-X main.Version=${version}' -o ${output} ."
 }
 ```
@@ -102,9 +102,9 @@ task "build" {
 Create shortcuts for tasks:
 
 ```pace
-alias "b" "build"
-alias "t" "test"
-alias "d" "dev"
+alias b build
+alias t test
+alias d dev
 ```
 
 Now you can run:
@@ -116,7 +116,7 @@ pace run b    # same as: pace run build
 ### Task Properties
 
 ```pace
-task "example" {
+task example {
     description "Example task"
     command "echo 'Hello World'"
 
@@ -150,7 +150,7 @@ task "example" {
 Pass arguments to tasks:
 
 ```pace
-task "greet" {
+task greet {
     args {
         required ["name"]
     }
@@ -165,7 +165,7 @@ pace run greet --name=World
 Or use positional arguments:
 
 ```pace
-task "echo" {
+task echo {
     command "echo $1 $2"
 }
 ```
@@ -230,21 +230,21 @@ Syntax highlighting for `.pace` files is available. Check the [vscode-pace](vsco
 ### Multi-language Project
 
 ```pace
-default "all"
+default all
 
-task "all" {
+task all {
     before ["backend", "frontend"]
     command "echo 'Build complete'"
 }
 
-task "backend" {
+task backend {
     command "go build -o bin/server cmd/server/main.go"
     inputs ["cmd/**/*.go", "internal/**/*.go"]
     outputs ["bin/server"]
     cache true
 }
 
-task "frontend" {
+task frontend {
     command "npm run build"
     working_dir "frontend"
     inputs ["frontend/src/**/*"]
@@ -256,7 +256,7 @@ task "frontend" {
 ### Development Workflow
 
 ```pace
-task "dev" {
+task dev {
     description "Start development server"
     before ["generate"]
     command "go run cmd/server/main.go"
@@ -266,13 +266,13 @@ hook "generate" {
     command "go generate ./..."
 }
 
-task "test" {
+task test {
     command "go test -v ./..."
     inputs ["**/*.go"]
     cache true
 }
 
-task "lint" {
+task lint {
     command "golangci-lint run"
     inputs ["**/*.go"]
 }

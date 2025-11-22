@@ -17,18 +17,18 @@ export interface SnippetsConfig {
 export const snippetsConfig: SnippetsConfig = {
     topLevel: [
         {
-            label: 'set',
-            snippet: 'set "${1:VAR_NAME}" "${2:value}"',
+            label: 'var',
+            snippet: 'var ${1:VAR_NAME} = "${2:value}"',
             documentation: 'Define a variable'
         },
         {
             label: 'default',
-            snippet: 'default "${1:task-name}"',
+            snippet: 'default ${1:task_name}',
             documentation: 'Set default task'
         },
         {
             label: 'alias',
-            snippet: 'alias "${1:short}" "${2:task-name}"',
+            snippet: 'alias ${1:short} ${2:task_name}',
             documentation: 'Create task alias'
         },
         {
@@ -43,7 +43,7 @@ export const snippetsConfig: SnippetsConfig = {
         },
         {
             label: 'task',
-            snippet: 'task "${1:task-name}" {\n\tdescription "${2:description}"\n\tcommand "${3:command}"\n}',
+            snippet: 'task ${1:task_name} {\n\tdescription "${2:description}"\n\tcommand "${3:command}"\n}',
             documentation: 'Define a task'
         }
     ],

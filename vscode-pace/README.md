@@ -54,17 +54,17 @@ Simply open any file with a `.pace` extension, and syntax highlighting will be a
 
 ```pace
 # Define variables
-set BUILD_OUTPUT "pace.exe"
-set VERSION "1.0.0"
+var BUILD_OUTPUT = "pace.exe"
+var VERSION = "1.0.0"
 
 # Set default task
-default "build"
+default build
 
 # Create task alias
-alias "b" "build"
+alias b build
 
 # Define a task
-task "build" {
+task build {
     description "Build the Pace executable"
     command "go build -o ${BUILD_OUTPUT} cmd/pace/main.go"
     inputs ["cmd/**/*.go", "internal/**/*.go"]
