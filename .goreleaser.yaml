@@ -10,6 +10,10 @@ builds:
       - -X github.com/azuyamat/pace/internal/version.Version={{.Version}}
       - -X github.com/azuyamat/pace/internal/version.Commit={{.Commit}}
       - -X github.com/azuyamat/pace/internal/version.Date={{.Date}}
+    flags:
+      - -trimpath
+    env:
+      - CGO_ENABLED=0
     goos:
       - windows
       - linux
