@@ -11,10 +11,10 @@ func (p *Parser) parseHook() (models.Hook, error) {
 
 	p.advance()
 
-	if p.currentToken.Type != TOKEN_STRING {
+	if p.currentToken.Type != TOKEN_IDENTIFIER {
 		return hook, p.createError(
-			fmt.Sprintf("Expected hook name (string) but got %s", p.currentToken.Type.String()),
-		).WithContext("Parsing hook definition").WithHint("Hook names must be enclosed in double quotes, e.g., hook \"setup\" { ... }")
+			fmt.Sprintf("Expected hook name (identifier) but got %s", p.currentToken.Type.String()),
+		).WithContext("Parsing hook definition").WithHint("Hook names must be identifiers, e.g., hook setup { ... }")
 	}
 	hook.Name = p.currentToken.Literal
 	p.advance()

@@ -52,6 +52,8 @@ func (l *Lexer) NextToken() Token {
 		token = l.makeSingleCharToken(TOKEN_LPAREN, line, column)
 	case ')':
 		token = l.makeSingleCharToken(TOKEN_RPAREN, line, column)
+	case '=':
+		token = l.makeSingleCharToken(TOKEN_EQUALS, line, column)
 	case '"':
 		// Check for triple-quoted string
 		if l.scanner.PeekChar() == '"' {

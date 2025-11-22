@@ -1,16 +1,16 @@
-task "compile" {
+task compile {
     command "npm run compile"
     description "Compile the VSCode Pace extension"
-    
+
     inputs ["package.json", "tsconfig.json", "src/*.ts"]
     outputs ["out/*.js"]
     cache true
 }
 
-task "package" {
+task package {
     command "vsce package"
     description "Package the VSCode Pace extension into a .vsix file"
     dependencies ["compile"]
-    
+
     cache false
 }

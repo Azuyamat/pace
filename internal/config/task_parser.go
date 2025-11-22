@@ -11,10 +11,10 @@ func (p *Parser) parseTask() (models.Task, error) {
 
 	p.advance()
 
-	if p.currentToken.Type != TOKEN_STRING {
+	if p.currentToken.Type != TOKEN_IDENTIFIER {
 		return task, p.createError(
-			fmt.Sprintf("Expected task name (string) but got %s", p.currentToken.Type.String()),
-		).WithContext("Parsing task definition").WithHint("Task names must be enclosed in double quotes, e.g., task \"build\" { ... }")
+			fmt.Sprintf("Expected task name (identifier) but got %s", p.currentToken.Type.String()),
+		).WithContext("Parsing task definition").WithHint("Task names must be identifiers, e.g., task build { ... }")
 	}
 	task.Name = p.currentToken.Literal
 	p.advance()

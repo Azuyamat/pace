@@ -24,6 +24,7 @@ const (
 	TOKEN_DOLLAR
 	TOKEN_LPAREN
 	TOKEN_RPAREN
+	TOKEN_EQUALS
 
 	TOKEN_COMMENT
 	TOKEN_NEWLINE
@@ -92,6 +93,8 @@ func (tokenType TokenType) String() string {
 		return "LPAREN"
 	case TOKEN_RPAREN:
 		return "RPAREN"
+	case TOKEN_EQUALS:
+		return "EQUALS"
 	case TOKEN_COMMENT:
 		return "COMMENT"
 	case TOKEN_NEWLINE:
