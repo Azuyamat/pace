@@ -1,7 +1,7 @@
 default build
 import "extra.pace"
 
-var output = "bin/pace"
+var output = "bin/pace.exe"
 
 task build {
 	command "go build -o ${output} cmd/pace/main.go"
