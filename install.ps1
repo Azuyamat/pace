@@ -106,6 +106,9 @@ if (-not $foundBinary) {
 if (-not (Test-Path $installDir)) { New-Item -ItemType Directory -Force -Path $installDir | Out-Null }
 
 Write-Host "Installing to $installDir..." -ForegroundColor Cyan
+if (Test-Path $exeDest) {
+    Remove-Item -Path $exeDest -Force
+}
 Move-Item -Path $foundBinary.FullName -Destination $exeDest -Force
 
 # --- Step 5: Update PATH ---
