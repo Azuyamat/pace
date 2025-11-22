@@ -7,16 +7,27 @@
 
 ## Installation Methods
 
-### Windows (winget)
+### Windows
 
-The easiest way to install on Windows:
+#### PowerShell (recommended)
+```powershell
+iwr -useb https://raw.githubusercontent.com/Azuyamat/pace/refs/heads/master/install.ps1 | iex
+```
+
+#### Winget
 
 ```bash
 winget install Azuyamat.Pace
 ```
 
-### Linux (deb)
+### Linux
 
+#### Script (recommended)
+```bash
+curl -sSL https://raw.githubusercontent.com/Azuyamat/pace/refs/heads/master/install.sh | sh
+```
+
+#### .deb Package
 Download the `.deb` package from [releases](https://github.com/azuyamat/pace/releases):
 
 ```bash
