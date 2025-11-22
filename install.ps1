@@ -107,7 +107,11 @@ if (-not (Test-Path $installDir)) { New-Item -ItemType Directory -Force -Path $i
 
 Write-Host "Installing to $installDir..." -ForegroundColor Cyan
 if (Test-Path $exeDest) {
-    Remove-Item -Path $exeDest -Force
+    $oldExe = Join-Path $installDir "$BinaryName.exe.old"
+    if (Test-Path $oldExe) {
+        Remove-Item -Path $oldExe -Force -ErrorAction SilentlyContinue
+    }
+    Move-Item -Path $exeDest -Destination $oldExe -Force
 }
 Move-Item -Path $foundBinary.FullName -Destination $exeDest -Force
 
