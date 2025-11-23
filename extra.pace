@@ -1,6 +1,0 @@
-task extra {
-	command "echo 'This is an extra task'"
-	description "task description"
-	watch true
-	inputs ["**/*.go"]
-}

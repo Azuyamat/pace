@@ -19,6 +19,16 @@ type Config struct {
 
 var ConfigFile = "config.pace"
 
+func NewDefaultConfig() *Config {
+	return &Config{
+		Tasks:     make(map[string]models.Task),
+		Hooks:     make(map[string]models.Hook),
+		Globals:   make(map[string]string),
+		Constants: make(map[string]string),
+		Aliases:   make(map[string]string),
+	}
+}
+
 func GetConfig() (*Config, error) {
 	return ParseFile(ConfigFile)
 }

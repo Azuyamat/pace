@@ -6,18 +6,6 @@ import (
 	"time"
 )
 
-const (
-	colorReset  = "\033[0m"
-	colorRed    = "\033[31m"
-	colorGreen  = "\033[32m"
-	colorYellow = "\033[33m"
-	colorBlue   = "\033[34m"
-	colorPurple = "\033[35m"
-	colorCyan   = "\033[36m"
-	colorGray   = "\033[90m"
-	colorWhite  = "\033[97m"
-)
-
 type LogLevel int
 
 const (
@@ -44,7 +32,8 @@ func (l *Logger) SetEnabled(enabled bool) {
 }
 
 func (l *Logger) timestamp() string {
-	return colorGray + time.Now().Format("15:04:05") + colorReset
+	background := ColorBlue.Dark().Background()
+	return background.Wrap(" " + time.Now().Format("15:04:05") + " ")
 }
 
 func (l *Logger) Info(format string, args ...interface{}) {
@@ -52,7 +41,10 @@ func (l *Logger) Info(format string, args ...interface{}) {
 		return
 	}
 	msg := fmt.Sprintf(format, args...)
-	fmt.Printf("%s %s%s%s\n", l.timestamp(), colorCyan, msg, colorReset)
+	foregroundColor := ColorWhite
+	icon := ColorBlue.Dim().Wrap("[INFO]")
+	coloredMessage := foregroundColor.Wrap(msg)
+	fmt.Printf("%s %s %s\n", l.timestamp(), icon, coloredMessage)
 }
 
 func (l *Logger) Success(format string, args ...interface{}) {
@@ -60,7 +52,7 @@ func (l *Logger) Success(format string, args ...interface{}) {
 		return
 	}
 	msg := fmt.Sprintf(format, args...)
-	fmt.Printf("%s %s✓%s %s\n", l.timestamp(), colorGreen, colorReset, msg)
+	fmt.Printf("%s %s✓%s %s\n", l.timestamp(), ColorGreen, ColorReset, msg)
 }
 
 func (l *Logger) Error(format string, args ...interface{}) {
@@ -68,7 +60,7 @@ func (l *Logger) Error(format string, args ...interface{}) {
 		return
 	}
 	msg := fmt.Sprintf(format, args...)
-	fmt.Printf("%s %s✗%s %s\n", l.timestamp(), colorRed, colorReset, msg)
+	fmt.Printf("%s %s✗%s %s\n", l.timestamp(), ColorRed, ColorReset, msg)
 }
 
 func (l *Logger) Warning(format string, args ...interface{}) {
@@ -76,7 +68,7 @@ func (l *Logger) Warning(format string, args ...interface{}) {
 		return
 	}
 	msg := fmt.Sprintf(format, args...)
-	fmt.Printf("%s %s⚠%s %s\n", l.timestamp(), colorYellow, colorReset, msg)
+	fmt.Printf("%s %s⚠%s %s\n", l.timestamp(), ColorYellow, ColorReset, msg)
 }
 
 func (l *Logger) Task(format string, args ...interface{}) {
@@ -84,7 +76,7 @@ func (l *Logger) Task(format string, args ...interface{}) {
 		return
 	}
 	msg := fmt.Sprintf(format, args...)
-	fmt.Printf("%s %s▶%s %s\n", l.timestamp(), colorBlue, colorReset, msg)
+	fmt.Printf("%s %s▶%s %s\n", l.timestamp(), ColorBlue, ColorReset, msg)
 }
 
 func (l *Logger) Debug(format string, args ...interface{}) {
@@ -92,7 +84,7 @@ func (l *Logger) Debug(format string, args ...interface{}) {
 		return
 	}
 	msg := fmt.Sprintf(format, args...)
-	fmt.Printf("%s %s[DEBUG]%s %s\n", l.timestamp(), colorGray, colorReset, msg)
+	fmt.Printf("%s %s[DEBUG]%s %s\n", l.timestamp(), ColorGray, ColorReset, msg)
 }
 
 func (l *Logger) Print(format string, args ...interface{}) {

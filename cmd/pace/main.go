@@ -7,8 +7,6 @@ import (
 	"github.com/azuyamat/pace/internal/command"
 )
 
-const ConfigFile = "config.pace"
-
 func main() {
 	err := command.RootCommand.Run(os.Args[1:])
 	if err != nil {
