@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	gear "github.com/azuyamat/gear/command"
+	"github.com/azuyamat/pace/internal/logger"
 )
 
 const (
@@ -24,13 +25,13 @@ func init() {
 }
 
 func updateHandler(ctx *gear.Context, args gear.ValidatedArgs) error {
-	fmt.Println("Checking for updates...")
+	logger.Info("Checking for updates...")
 
 	if cmd := getManagedUpdateCommand(); cmd != nil {
 		return runManagedUpdate(cmd)
 	}
 
-	fmt.Println("Running installation script to update...")
+	logger.Info("Running installation script to update...")
 	return runInstallScript()
 }
 
@@ -70,7 +71,7 @@ func getManagedUpdateCommand() *exec.Cmd {
 }
 
 func runManagedUpdate(cmd *exec.Cmd) error {
-	fmt.Printf("Running: %s\n", strings.Join(cmd.Args, " "))
+	logger.Task("Running: %s", strings.Join(cmd.Args, " "))
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -80,7 +81,7 @@ func runManagedUpdate(cmd *exec.Cmd) error {
 		return fmt.Errorf("update command failed: %w", err)
 	}
 
-	fmt.Println("\nUpdate completed successfully!")
+	logger.Success("Update completed successfully!")
 	return nil
 }
 
@@ -106,7 +107,7 @@ func runInstallScript() error {
 		return fmt.Errorf("installation script failed: %w", err)
 	}
 
-	fmt.Println("\nUpdate completed successfully!")
+	logger.Success("Update completed successfully!")
 	return nil
 }
 

@@ -5,6 +5,7 @@ import (
 
 	gear "github.com/azuyamat/gear/command"
 	"github.com/azuyamat/pace/internal/config"
+	"github.com/azuyamat/pace/internal/logger"
 	"github.com/azuyamat/pace/internal/runner"
 )
 
@@ -28,6 +29,7 @@ func watchHandler(ctx *gear.Context, args gear.ValidatedArgs) error {
 
 func Watch(cfg *config.Config, args []string) error {
 	if len(args) < 1 {
+		logger.Error("No task name provided for watch command")
 		return fmt.Errorf("no task name provided for watch command")
 	}
 
@@ -39,10 +41,12 @@ func Watch(cfg *config.Config, args []string) error {
 
 	task, exists := cfg.Tasks[taskName]
 	if !exists {
+		logger.Error("Task %q not found in configuration", taskName)
 		return fmt.Errorf("task %q not found in configuration", taskName)
 	}
 
 	if len(task.Inputs) == 0 {
+		logger.Warning("Task %q has no inputs defined for watching", taskName)
 		return fmt.Errorf("task %q has no inputs defined for watching", taskName)
 	}
 

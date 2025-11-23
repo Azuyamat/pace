@@ -1,9 +1,8 @@
 package command
 
 import (
-	"fmt"
-
 	gear "github.com/azuyamat/gear/command"
+	"github.com/azuyamat/pace/internal/logger"
 	"github.com/azuyamat/pace/internal/version"
 )
 
@@ -15,8 +14,8 @@ func init() {
 }
 
 func versionHandler(ctx *gear.Context, args gear.ValidatedArgs) error {
-	fmt.Printf("pace version %s\n", version.Version)
-	fmt.Printf("commit: %s\n", version.Commit)
-	fmt.Printf("built at: %s\n", version.Date)
+	logger.Printf("pace version %s\n", version.Version)
+	logger.Printf("commit: %s\n", version.Commit)
+	logger.Printf("built at: %s\n", version.Date)
 	return nil
 }
