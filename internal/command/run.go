@@ -5,6 +5,7 @@ import (
 
 	gear "github.com/azuyamat/gear/command"
 	"github.com/azuyamat/pace/internal/config"
+	"github.com/azuyamat/pace/internal/logger"
 	"github.com/azuyamat/pace/internal/runner"
 )
 
@@ -27,6 +28,7 @@ func runHandler(ctx *gear.Context, args gear.ValidatedArgs) error {
 
 	task, exists := config.GetTaskOrDefault(taskName)
 	if !exists {
+		logger.Error("Task '%s' not found", taskName)
 		return fmt.Errorf("task '%s' not found", taskName)
 	}
 
