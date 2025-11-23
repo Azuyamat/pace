@@ -32,8 +32,13 @@ func (l *Logger) SetEnabled(enabled bool) {
 }
 
 func (l *Logger) timestamp() string {
-	background := ColorBlue.Dark().Background()
-	return background.Wrap(" " + time.Now().Format("15:04:05") + " ")
+	timeStr := time.Now().Format("15:04:05")
+	return ColorGray.Wrap("[" + timeStr + "]")
+}
+
+func (l *Logger) badge(text string, color Color) string {
+	bg := color.Dark().Background()
+	return bg.Wrap(" " + text + " ")
 }
 
 func (l *Logger) Info(format string, args ...interface{}) {
@@ -41,10 +46,10 @@ func (l *Logger) Info(format string, args ...interface{}) {
 		return
 	}
 	msg := fmt.Sprintf(format, args...)
-	foregroundColor := ColorWhite
-	icon := ColorBlue.Dim().Wrap("[INFO]")
-	coloredMessage := foregroundColor.Wrap(msg)
-	fmt.Printf("%s %s %s\n", l.timestamp(), icon, coloredMessage)
+	badge := l.badge("INFO", ColorBlue)
+	icon := ColorCyan.Wrap("◆")
+	coloredMsg := ColorWhite.Wrap(msg)
+	fmt.Printf("%s %s %s %s\n", l.timestamp(), badge, icon, coloredMsg)
 }
 
 func (l *Logger) Success(format string, args ...interface{}) {
@@ -52,7 +57,10 @@ func (l *Logger) Success(format string, args ...interface{}) {
 		return
 	}
 	msg := fmt.Sprintf(format, args...)
-	fmt.Printf("%s %s✓%s %s\n", l.timestamp(), ColorGreen, ColorReset, msg)
+	badge := l.badge("DONE", ColorGreen)
+	icon := ColorGreen.Bright().Wrap("✓")
+	coloredMsg := ColorWhite.Wrap(msg)
+	fmt.Printf("%s %s %s %s\n", l.timestamp(), badge, icon, coloredMsg)
 }
 
 func (l *Logger) Error(format string, args ...interface{}) {
@@ -60,7 +68,10 @@ func (l *Logger) Error(format string, args ...interface{}) {
 		return
 	}
 	msg := fmt.Sprintf(format, args...)
-	fmt.Printf("%s %s✗%s %s\n", l.timestamp(), ColorRed, ColorReset, msg)
+	badge := l.badge("ERROR", ColorRed)
+	icon := ColorRed.Bright().Wrap("✗")
+	coloredMsg := ColorWhite.Wrap(msg)
+	fmt.Printf("%s %s %s %s\n", l.timestamp(), badge, icon, coloredMsg)
 }
 
 func (l *Logger) Warning(format string, args ...interface{}) {
@@ -68,7 +79,10 @@ func (l *Logger) Warning(format string, args ...interface{}) {
 		return
 	}
 	msg := fmt.Sprintf(format, args...)
-	fmt.Printf("%s %s⚠%s %s\n", l.timestamp(), ColorYellow, ColorReset, msg)
+	badge := l.badge("WARN", ColorYellow)
+	icon := ColorYellow.Bright().Wrap("⚠")
+	coloredMsg := ColorWhite.Wrap(msg)
+	fmt.Printf("%s %s %s %s\n", l.timestamp(), badge, icon, coloredMsg)
 }
 
 func (l *Logger) Task(format string, args ...interface{}) {
@@ -76,7 +90,10 @@ func (l *Logger) Task(format string, args ...interface{}) {
 		return
 	}
 	msg := fmt.Sprintf(format, args...)
-	fmt.Printf("%s %s▶%s %s\n", l.timestamp(), ColorBlue, ColorReset, msg)
+	badge := l.badge("TASK", ColorPurple)
+	icon := ColorPurple.Bright().Wrap("▶")
+	coloredMsg := ColorWhite.Wrap(msg)
+	fmt.Printf("%s %s %s %s\n", l.timestamp(), badge, icon, coloredMsg)
 }
 
 func (l *Logger) Debug(format string, args ...interface{}) {
@@ -84,7 +101,10 @@ func (l *Logger) Debug(format string, args ...interface{}) {
 		return
 	}
 	msg := fmt.Sprintf(format, args...)
-	fmt.Printf("%s %s[DEBUG]%s %s\n", l.timestamp(), ColorGray, ColorReset, msg)
+	badge := l.badge("DEBUG", ColorGray)
+	icon := ColorGray.Wrap("●")
+	coloredMsg := ColorGray.Wrap(msg)
+	fmt.Printf("%s %s %s %s\n", l.timestamp(), badge, icon, coloredMsg)
 }
 
 func (l *Logger) Print(format string, args ...interface{}) {
