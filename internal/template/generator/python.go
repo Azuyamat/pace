@@ -33,7 +33,7 @@ func generatePython() (config.Config, error) {
 		cfg.DefaultTask = "test"
 	}
 
-	cfg.Tasks["install"] = generateInstallTask(depManager)
+	cfg.Hooks["install"] = generateInstallHook(depManager)
 
 	if entryPoint != "" {
 		cfg.Tasks["run"] = models.Task{
@@ -150,32 +150,24 @@ func hasPyprojectToml() bool {
 	return hasFile("pyproject.toml")
 }
 
-func generateInstallTask(depManager string) models.Task {
+func generateInstallHook(depManager string) models.Hook {
 	var command string
-	var inputs []string
 
 	switch depManager {
 	case "poetry":
 		command = "poetry install"
-		inputs = []string{"pyproject.toml", "poetry.lock"}
 	case "pdm":
 		command = "pdm install"
-		inputs = []string{"pyproject.toml", "pdm.lock"}
 	case "pipenv":
 		command = "pipenv install"
-		inputs = []string{"Pipfile", "Pipfile.lock"}
 	default:
 		command = "pip install -r requirements.txt"
-		inputs = []string{"requirements.txt"}
 	}
 
-	return models.Task{
+	return models.Hook{
 		Name:        "install",
-		Alias:       "i",
 		Command:     command,
 		Description: "Install dependencies",
-		Cache:       true,
-		Inputs:      inputs,
 	}
 }
 
