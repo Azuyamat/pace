@@ -12,13 +12,16 @@ Syntax highlighting support for Pace configuration files (`.pace`).
 
 ## Supported Syntax
 
-- **Keywords**: `set`, `default`, `alias`, `globals`, `hook`, `task`
-- **Properties**: `description`, `command`, `before`, `after`, `inputs`, `outputs`, `cache`, `on_success`, `on_failure`, `dependencies`, `parallel`, `timeout`, `retry`, `retry_delay`, `silent`, `watch`, `continue_on_error`, `env`, `args`, `required`, `optional`
+- **Keywords**: `var`, `default`, `alias`, `hook`, `task`, `import`
+- **Task Properties**: `description`, `command`, `depends-on`, `requires`, `triggers`, `inputs`, `outputs`, `cache`, `on_success`, `on_failure`, `parallel`, `timeout`, `retry`, `retry_delay`, `silent`, `watch`, `continue_on_error`, `env`, `args`, `working_dir`, `when`
+- **Hook Properties**: `description`, `command`, `env`, `working_dir`
+- **Args Properties**: `required`, `optional`
 - **Strings**: Single-line (`"..."`) and multi-line (`"""..."""`)
-- **Variables**: Variable interpolation in strings
+- **Variables**: Variable interpolation in strings (`${VAR}` or `$VAR`)
 - **Comments**: Line comments with `#`
 - **Booleans**: `true`, `false`
 - **Numbers**: Including duration suffixes (`5m`, `30s`, etc.)
+- **Arrays**: Support both comma-separated values with identifiers or strings
 
 ## Installation
 
@@ -60,17 +63,28 @@ var VERSION = "1.0.0"
 # Set default task
 default build
 
-# Create task alias
-alias b build
-
-# Define a task
-task build {
+# Define a task with inline alias
+task build [b] {
     description "Build the Pace executable"
-    command "go build -o ${BUILD_OUTPUT} cmd/pace/main.go"
-    inputs ["cmd/**/*.go", "internal/**/*.go"]
-    outputs ["${BUILD_OUTPUT}"]
+    command "go build -ldflags '-X main.Version=${VERSION}' -o ${BUILD_OUTPUT} cmd/pace/main.go"
+    inputs [cmd/**/*.go, internal/**/*.go]
+    outputs [${BUILD_OUTPUT}]
     cache true
     timeout "5m"
+}
+
+# Define a hook
+hook test {
+    description "Run tests"
+    command "go test ./..."
+}
+
+# Task with dependencies
+task release [r] {
+    description "Build release version"
+    requires [test]
+    depends-on [build]
+    command "echo 'Release ready'"
 }
 ```
 

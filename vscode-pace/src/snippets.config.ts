@@ -29,12 +29,7 @@ export const snippetsConfig: SnippetsConfig = {
         {
             label: 'alias',
             snippet: 'alias ${1:short} ${2:task_name}',
-            documentation: 'Create task alias'
-        },
-        {
-            label: 'globals',
-            snippet: 'globals {\n\t"${1:KEY}" "${2:value}"\n}',
-            documentation: 'Define global environment variables'
+            documentation: 'Create task alias (deprecated: use task name [alias] syntax instead)'
         },
         {
             label: 'hook',
@@ -43,8 +38,8 @@ export const snippetsConfig: SnippetsConfig = {
         },
         {
             label: 'task',
-            snippet: 'task ${1:task_name} {\n\tdescription "${2:description}"\n\tcommand "${3:command}"\n}',
-            documentation: 'Define a task'
+            snippet: 'task ${1:task_name} [${2:alias}] {\n\tdescription "${3:description}"\n\tcommand "${4:command}"\n}',
+            documentation: 'Define a task with optional alias'
         }
     ],
     taskProperties: [

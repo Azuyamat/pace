@@ -7,18 +7,22 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 )
 
 const cacheDir = ".pace-cache"
 
+var cacheLocks sync.Map
+
 type TaskCache struct {
-	TaskName     string    `json:"task_name"`
-	InputsHash   string    `json:"inputs_hash"`
-	OutputsHash  string    `json:"outputs_hash"`
-	LastRunTime  time.Time `json:"last_run_time"`
-	CommandHash  string    `json:"command_hash"`
-	Dependencies []string  `json:"dependencies"`
+	TaskName     string            `json:"task_name"`
+	InputsHash   string            `json:"inputs_hash"`
+	OutputsHash  string            `json:"outputs_hash"`
+	LastRunTime  time.Time         `json:"last_run_time"`
+	CommandHash  string            `json:"command_hash"`
+	Dependencies []string          `json:"dependencies"`
+	DepHashes    map[string]string `json:"dep_hashes"`
 }
 
 func computeFileHash(filePath string) (string, error) {
@@ -43,7 +47,7 @@ func computeFilesHash(patterns []string) (string, error) {
 
 	hash := sha256.New()
 	for _, pattern := range patterns {
-		matches, err := filepath.Glob(pattern)
+		matches, err := expandGlobPattern(pattern)
 		if err != nil {
 			return "", fmt.Errorf("invalid pattern %q: %v", pattern, err)
 		}
@@ -51,10 +55,10 @@ func computeFilesHash(patterns []string) (string, error) {
 		for _, match := range matches {
 			info, err := os.Stat(match)
 			if err != nil {
-				continue // File doesn't exist yet, skip
+				continue
 			}
 			if info.IsDir() {
-				continue // Skip directories
+				continue
 			}
 
 			fileHash, err := computeFileHash(match)
@@ -83,12 +87,17 @@ func getCachePath(taskName string) string {
 }
 
 func loadCache(taskName string) (*TaskCache, error) {
+	mutexVal, _ := cacheLocks.LoadOrStore(taskName, &sync.Mutex{})
+	mutex := mutexVal.(*sync.Mutex)
+	mutex.Lock()
+	defer mutex.Unlock()
+
 	cachePath := getCachePath(taskName)
 
 	data, err := os.ReadFile(cachePath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, nil // No cache exists
+			return nil, nil
 		}
 		return nil, err
 	}
@@ -102,6 +111,11 @@ func loadCache(taskName string) (*TaskCache, error) {
 }
 
 func saveCache(cache *TaskCache) error {
+	mutexVal, _ := cacheLocks.LoadOrStore(cache.TaskName, &sync.Mutex{})
+	mutex := mutexVal.(*sync.Mutex)
+	mutex.Lock()
+	defer mutex.Unlock()
+
 	if err := ensureCacheDir(); err != nil {
 		return err
 	}
@@ -112,7 +126,13 @@ func saveCache(cache *TaskCache) error {
 	}
 
 	cachePath := getCachePath(cache.TaskName)
-	return os.WriteFile(cachePath, data, 0644)
+	tempPath := cachePath + ".tmp"
+
+	if err := os.WriteFile(tempPath, data, 0644); err != nil {
+		return err
+	}
+
+	return os.Rename(tempPath, cachePath)
 }
 
 func (r *Runner) needsRerun(taskName string) (bool, error) {
@@ -138,12 +158,43 @@ func (r *Runner) needsRerun(taskName string) (bool, error) {
 		return true, nil // Command changed, need to run
 	}
 
-	if len(cache.Dependencies) != len(task.Dependencies) {
-		return true, nil // Dependencies changed, need to run
+	if len(cache.Dependencies) != len(task.DependsOn) {
+		return true, nil
 	}
-	for i, dep := range task.Dependencies {
+	for i, dep := range task.DependsOn {
 		if i >= len(cache.Dependencies) || cache.Dependencies[i] != dep {
-			return true, nil // Dependencies changed, need to run
+			return true, nil
+		}
+	}
+
+	for _, depName := range task.DependsOn {
+		depTask, exists := r.Config.Tasks[depName]
+		if !exists {
+			continue
+		}
+
+		if depTask.Cache {
+			depCache, err := loadCache(depName)
+			if err != nil || depCache == nil {
+				return true, nil
+			}
+
+			depOutputsHash, err := computeFilesHash(depTask.Outputs)
+			if err != nil {
+				return false, err
+			}
+
+			if cache.DepHashes != nil {
+				if cachedHash, ok := cache.DepHashes[depName]; ok {
+					if cachedHash != depOutputsHash {
+						return true, nil
+					}
+				} else {
+					return true, nil
+				}
+			} else {
+				return true, nil
+			}
 		}
 	}
 
@@ -157,19 +208,19 @@ func (r *Runner) needsRerun(taskName string) (bool, error) {
 
 	if len(task.Outputs) > 0 {
 		for _, outputPattern := range task.Outputs {
-			matches, err := filepath.Glob(outputPattern)
+			matches, err := expandGlobPattern(outputPattern)
 			if err != nil {
 				return false, fmt.Errorf("invalid output pattern %q: %v", outputPattern, err)
 			}
 
 			if len(matches) == 0 {
-				return true, nil // Output doesn't exist, need to run
+				return true, nil
 			}
 
 			for _, match := range matches {
 				info, err := os.Stat(match)
 				if err != nil {
-					return true, nil // Output doesn't exist, need to run
+					return true, nil
 				}
 				if info.IsDir() {
 					continue
@@ -181,7 +232,7 @@ func (r *Runner) needsRerun(taskName string) (bool, error) {
 						return false, err
 					}
 					if cache.OutputsHash != currentOutputsHash {
-						return true, nil // Outputs changed, need to run
+						return true, nil
 					}
 				}
 			}
@@ -211,13 +262,30 @@ func (r *Runner) updateCache(taskName string) error {
 		return err
 	}
 
+	depHashes := make(map[string]string)
+	for _, depName := range task.DependsOn {
+		depTask, exists := r.Config.Tasks[depName]
+		if !exists {
+			continue
+		}
+
+		if depTask.Cache {
+			depOutputsHash, err := computeFilesHash(depTask.Outputs)
+			if err != nil {
+				return err
+			}
+			depHashes[depName] = depOutputsHash
+		}
+	}
+
 	cache := &TaskCache{
 		TaskName:     taskName,
 		InputsHash:   inputsHash,
 		OutputsHash:  outputsHash,
 		LastRunTime:  time.Now(),
 		CommandHash:  computeStringHash(task.Command),
-		Dependencies: task.Dependencies,
+		Dependencies: task.DependsOn,
+		DepHashes:    depHashes,
 	}
 
 	return saveCache(cache)

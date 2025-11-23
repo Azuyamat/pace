@@ -15,43 +15,38 @@ var build_dir = "bin"
 # Default task
 default build
 
-# Aliases
-alias b build
-alias t test
-alias d dev
-
 # Development task
-task dev {
+task dev [d] {
     description "Run development server with auto-reload"
     watch true
-    inputs ["**/*.go"]
+    inputs [**/*.go]
     command "go run cmd/server/main.go"
 }
 
 # Test task
-task test {
+task test [t] {
     description "Run all tests with coverage"
     command "go test -v -cover ./..."
-    inputs ["**/*.go", "**/*_test.go"]
+    inputs [**/*.go, **/*_test.go]
     cache true
 }
 
-# Lint task
+# Lint hook
 hook lint {
     description "Run golangci-lint"
     command "golangci-lint run ./..."
 }
 
 # Build task
-task build {
+task build [b] {
     description "Build the application"
     command "go build -ldflags '-X main.Version=${version}' -o ${build_dir}/${app_name} cmd/server/main.go"
-    before ["test", "lint"]
-    inputs ["**/*.go", "go.mod", "go.sum"]
-    outputs ["${build_dir}/${app_name}"]
+    requires [test, lint]
+    inputs [**/*.go, go.mod, go.sum]
+    outputs [${build_dir}/${app_name}]
     cache true
     env {
-        "CGO_ENABLED" "0"
+        CGO_ENABLED = "0"
     }
 }
 
@@ -59,16 +54,16 @@ task build {
 task docker {
     description "Build Docker image"
     command "docker build -t ${app_name}:${version} ."
-    before ["build"]
-    inputs ["Dockerfile", "${build_dir}/${app_name}"]
+    depends-on [build]
+    inputs [Dockerfile, ${build_dir}/${app_name}]
 }
 
 # Deploy task
 task deploy {
     description "Deploy to production"
     command "./scripts/deploy.sh ${version}"
-    before ["docker"]
-    on_success ["notify"]
+    depends-on [docker]
+    on_success [notify]
     timeout "15m"
     retry 2
     retry_delay "10s"
@@ -90,33 +85,33 @@ default all
 # Build everything
 task all {
     description "Build backend and frontend"
-    before ["backend", "frontend"]
+    depends-on [backend, frontend]
     parallel true
 }
 
 # Backend (Go)
-task backend {
+task backend [be] {
     description "Build Go backend"
     command "go build -o bin/server cmd/server/main.go"
-    inputs ["cmd/**/*.go", "internal/**/*.go", "go.mod"]
-    outputs ["bin/server"]
+    inputs [cmd/**/*.go, internal/**/*.go, go.mod]
+    outputs [bin/server]
     cache true
 }
 
-task backend-test {
+task backend-test [bet] {
     description "Run backend tests"
     command "go test ./..."
-    inputs ["**/*.go"]
+    inputs [**/*.go]
 }
 
 # Frontend (Node.js)
-task frontend {
+task frontend [fe] {
     description "Build React frontend"
     working_dir "frontend"
     command "npm run build"
-    before ["frontend-install"]
-    inputs ["frontend/src/**/*", "frontend/package.json"]
-    outputs ["frontend/dist/**/*"]
+    requires [frontend-install]
+    inputs [frontend/src/**/*,  frontend/package.json]
+    outputs [frontend/dist/**/*]
     cache true
 }
 
@@ -126,18 +121,18 @@ hook frontend-install {
     command "npm install"
 }
 
-task frontend-dev {
+task frontend-dev [fed] {
     description "Start frontend dev server"
     working_dir "frontend"
     watch true
-    inputs ["frontend/src/**/*.{ts,tsx,css}"]
+    inputs [frontend/src/**/*.{ts,tsx,css}]
     command "npm run dev"
 }
 
 # Development
-task dev {
+task dev [d] {
     description "Run both backend and frontend in dev mode"
-    before ["backend", "frontend-dev"]
+    depends-on [backend, frontend-dev]
     parallel true
 }
 ```
@@ -148,11 +143,6 @@ Build, test, and package a Rust application:
 
 ```pace
 default build
-
-# Aliases
-alias b build
-alias t test
-alias r run
 
 # Format code
 hook fmt {
@@ -167,33 +157,33 @@ hook clippy {
 }
 
 # Run tests
-task test {
+task test [t] {
     description "Run all tests"
     command "cargo test --all-features"
-    before ["fmt", "clippy"]
-    inputs ["src/**/*.rs", "tests/**/*.rs", "Cargo.toml"]
+    requires [fmt, clippy]
+    inputs [src/**/*.rs, tests/**/*.rs, Cargo.toml]
     cache true
 }
 
 # Build debug
-task build {
+task build [b] {
     description "Build debug binary"
     command "cargo build"
-    before ["test"]
-    inputs ["src/**/*.rs", "Cargo.toml"]
-    outputs ["target/debug/myapp"]
+    requires [test]
+    inputs [src/**/*.rs, Cargo.toml]
+    outputs [target/debug/myapp]
     cache true
 }
 
 # Build release
-task release {
+task release [r] {
     description "Build optimized release binary"
     command "cargo build --release"
-    before ["test"]
-    inputs ["src/**/*.rs", "Cargo.toml"]
-    outputs ["target/release/myapp"]
+    requires [test]
+    inputs [src/**/*.rs, Cargo.toml]
+    outputs [target/release/myapp]
     env {
-        "RUSTFLAGS" "-C target-cpu=native"
+        RUSTFLAGS = "-C target-cpu=native"
     }
 }
 
@@ -217,11 +207,6 @@ Development workflow for a Python application:
 ```pace
 default test
 
-# Aliases
-alias t test
-alias l lint
-alias f format
-
 # Setup virtual environment
 hook venv {
     description "Create virtual environment"
@@ -232,7 +217,7 @@ hook venv {
 hook install {
     description "Install dependencies"
     command ".venv/bin/pip install -r requirements.txt"
-    before ["venv"]
+    requires [venv]
 }
 
 # Format code
@@ -251,26 +236,26 @@ hook lint {
 }
 
 # Run tests
-task test {
+task test [t] {
     description "Run pytest with coverage"
     command ".venv/bin/pytest tests/ --cov=src --cov-report=html"
-    before ["install", "lint"]
-    inputs ["src/**/*.py", "tests/**/*.py"]
+    requires [install, lint]
+    inputs [src/**/*.py, tests/**/*.py]
     cache true
 }
 
 # Run application
-task run {
+task run [r] {
     description "Run the application"
     command ".venv/bin/python -m src.main"
-    before ["install"]
+    requires [install]
 }
 
 # Development with auto-reload
-task dev {
+task dev [d] {
     description "Run with auto-reload"
     watch true
-    inputs ["src/**/*.py"]
+    inputs [src/**/*.py]
     command ".venv/bin/python -m src.main --reload"
 }
 ```
@@ -285,7 +270,7 @@ default ci
 # CI pipeline
 task ci {
     description "Run full CI pipeline"
-    before ["lint", "test", "build", "security-scan"]
+    depends-on [lint, test, build, security-scan]
     parallel false
 }
 
@@ -300,7 +285,7 @@ hook lint {
 }
 
 # Security scanning
-task security-scan {
+task security-scan [sec] {
     description "Run security checks"
     command """
         gosec ./...
@@ -310,32 +295,32 @@ task security-scan {
 }
 
 # Run tests
-task test {
+task test [t] {
     description "Run tests with coverage"
     command "go test -v -race -coverprofile=coverage.out ./..."
-    outputs ["coverage.out"]
+    outputs [coverage.out]
     timeout "10m"
 }
 
 # Build application
-task build {
+task build [b] {
     description "Build for multiple platforms"
     command """
         GOOS=linux GOARCH=amd64 go build -o dist/app-linux-amd64 main.go
         GOOS=darwin GOARCH=amd64 go build -o dist/app-darwin-amd64 main.go
         GOOS=windows GOARCH=amd64 go build -o dist/app-windows-amd64.exe main.go
     """
-    before ["test"]
-    inputs ["**/*.go"]
-    outputs ["dist/*"]
+    requires [test]
+    inputs [**/*.go]
+    outputs [dist/*]
     cache true
 }
 
 # Create release
-task release {
+task release [r] {
     description "Create GitHub release"
     command "./scripts/create-release.sh"
-    before ["ci"]
+    depends-on [ci]
 }
 ```
 
@@ -346,10 +331,6 @@ Build and serve documentation:
 ```pace
 default build
 
-# Aliases
-alias s serve
-alias d dev
-
 # Install dependencies
 hook install {
     description "Install documentation tools"
@@ -357,36 +338,36 @@ hook install {
 }
 
 # Build docs
-task build {
+task build [b] {
     description "Build documentation site"
     command "mkdocs build"
-    before ["install"]
-    inputs ["docs/**/*.md", "mkdocs.yml"]
-    outputs ["site/**/*"]
+    requires [install]
+    inputs [docs/**/*.md, mkdocs.yml]
+    outputs [site/**/*]
     cache true
 }
 
 # Serve locally
-task serve {
+task serve [s] {
     description "Serve documentation locally"
     command "mkdocs serve"
-    before ["install"]
+    requires [install]
 }
 
 # Development with auto-reload
-task dev {
+task dev [d] {
     description "Develop with live reload"
     watch true
-    inputs ["docs/**/*.md", "mkdocs.yml"]
+    inputs [docs/**/*.md, mkdocs.yml]
     command "mkdocs serve"
-    before ["install"]
+    requires [install]
 }
 
 # Deploy to GitHub Pages
 task deploy {
     description "Deploy to GitHub Pages"
     command "mkdocs gh-deploy --force"
-    before ["build"]
+    depends-on [build]
 }
 ```
 
@@ -399,22 +380,22 @@ Manage database migrations:
 var db_url = "${DATABASE_URL}"
 
 # Run migrations
-task migrate {
+task migrate [m] {
     description "Run database migrations"
     command "migrate -path migrations -database ${db_url} up"
     env {
-        "DATABASE_URL" "postgres://localhost/mydb?sslmode=disable"
+        DATABASE_URL = "postgres://localhost/mydb?sslmode=disable"
     }
 }
 
 # Rollback migration
-task migrate-down {
+task migrate-down [md] {
     description "Rollback last migration"
     command "migrate -path migrations -database ${db_url} down 1"
 }
 
 # Create new migration
-task migrate-create {
+task migrate-create [mc] {
     description "Create new migration"
     args {
         required ["name"]
@@ -429,7 +410,7 @@ task db-reset {
         dropdb mydb
         createdb mydb
     """
-    after ["migrate"]
+    triggers [migrate]
 }
 
 # Seed database
@@ -448,33 +429,33 @@ Different tasks for different environments:
 var env = "${ENVIRONMENT}"
 
 # Development build
-task dev {
+task dev [d] {
     description "Build for development"
     command "go build -o bin/app-dev main.go"
     env {
-        "ENVIRONMENT" "development"
-        "DEBUG" "true"
+        ENVIRONMENT = "development"
+        DEBUG = "true"
     }
 }
 
 # Staging build
-task staging {
+task staging [s] {
     description "Build for staging"
     command "go build -ldflags '-X main.Env=staging' -o bin/app-staging main.go"
-    before ["test"]
+    requires [test]
     env {
-        "ENVIRONMENT" "staging"
+        ENVIRONMENT = "staging"
     }
 }
 
 # Production build
-task production {
+task production [p] {
     description "Build for production"
     command "go build -ldflags '-X main.Env=production -s -w' -o bin/app-prod main.go"
-    before ["test", "security-scan"]
+    requires [test, security-scan]
     env {
-        "ENVIRONMENT" "production"
-        "CGO_ENABLED" "0"
+        ENVIRONMENT = "production"
+        CGO_ENABLED = "0"
     }
 }
 

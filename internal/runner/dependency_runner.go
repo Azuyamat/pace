@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -8,8 +9,9 @@ import (
 )
 
 type DependencyRunner struct {
-	runTask func(task models.Task, extraArgs ...string) error
-	log     taskLogger
+	runTask         func(task models.Task, extraArgs ...string) error
+	runTaskWithCtx  func(ctx context.Context, task models.Task, extraArgs ...string) error
+	log             taskLogger
 }
 
 func NewDependencyRunner(runTask func(models.Task, ...string) error, log taskLogger) *DependencyRunner {
@@ -19,10 +21,25 @@ func NewDependencyRunner(runTask func(models.Task, ...string) error, log taskLog
 	}
 }
 
+func (dr *DependencyRunner) SetContextRunner(runTaskWithCtx func(context.Context, models.Task, ...string) error) {
+	dr.runTaskWithCtx = runTaskWithCtx
+}
+
 func (dr *DependencyRunner) RunDependencies(task *models.Task, dependencies []models.Task) error {
+	return dr.RunDependenciesWithContext(context.Background(), task, dependencies)
+}
+
+func (dr *DependencyRunner) RunDependenciesWithContext(ctx context.Context, task *models.Task, dependencies []models.Task) error {
+	runFunc := dr.runTask
+	if dr.runTaskWithCtx != nil {
+		runFunc = func(dep models.Task, extraArgs ...string) error {
+			return dr.runTaskWithCtx(ctx, dep, extraArgs...)
+		}
+	}
+
 	if !task.Parallel {
 		for _, dep := range dependencies {
-			if err := dr.runTask(dep); err != nil {
+			if err := runFunc(dep); err != nil {
 				if !task.ContinueOnError {
 					return err
 				}
@@ -32,30 +49,29 @@ func (dr *DependencyRunner) RunDependencies(task *models.Task, dependencies []mo
 	}
 
 	var wg sync.WaitGroup
-	errChan := make(chan error, len(dependencies))
+	var mu sync.Mutex
+	var firstErr error
 
 	for _, dep := range dependencies {
 		wg.Add(1)
 		go func(dep models.Task) {
 			defer wg.Done()
-			if err := dr.runTask(dep); err != nil {
+
+			if err := runFunc(dep); err != nil {
 				if !task.ContinueOnError {
-					errChan <- err
+					mu.Lock()
+					if firstErr == nil {
+						firstErr = err
+					}
+					mu.Unlock()
 				}
 			}
 		}(dep)
 	}
 
 	wg.Wait()
-	close(errChan)
 
-	for err := range errChan {
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return firstErr
 }
 
 type HookExecutor struct {

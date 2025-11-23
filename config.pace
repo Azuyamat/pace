@@ -1,34 +1,46 @@
 default build
-import "extra.pace"
-
-var output = "bin/pace.exe"
 
 task build {
-	command "go build -o ${output} cmd/pace/main.go"
-    description "Build the project"
+    command "go build -o bin/pace ./cmd\pace"
+    description "Build the application"
+    inputs ["**/*.go", "go.mod", "go.sum"]
+    outputs ["bin/pace"]
+    cache true
+}
 
-    before ["tidy", "test"]
-	after ["tidy"]
-    
+task run {
+    command "go run ./cmd\pace"
+    description "Run the application"
     inputs ["**/*.go"]
-    outputs ["${output}"]
-
-	retry 2
-	retry_delay "3s"
+    watch true
 }
 
-hook tidy {
-    description "Format the code"
-    command "gofmt -s -w ."
-}
-
-hook test {
-    description "Run tests"
+task test {
     command "go test ./..."
+    description "Run tests"
+    inputs ["**/*.go"]
+    cache true
 }
 
-task ts {
-	command "echo 'This is a task named ts'"
-	dependencies ["extra"]
-	description "task ts description"
+task tidy {
+    command "go mod tidy"
+    description "Tidy go.mod and go.sum"
+    inputs ["go.mod"]
+}
+
+task vet {
+    command "go vet ./..."
+    description "Run go vet"
+    inputs ["**/*.go"]
+    cache true
+}
+
+hook clean {
+    command "if exist bin rmdir /s /q bin"
+    description "Clean build artifacts"
+}
+
+hook fmt {
+    command "go fmt ./..."
+    description "Format code"
 }

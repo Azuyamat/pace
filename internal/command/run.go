@@ -5,13 +5,12 @@ import (
 
 	gear "github.com/azuyamat/gear/command"
 	"github.com/azuyamat/pace/internal/config"
-	"github.com/azuyamat/pace/internal/logger"
 	"github.com/azuyamat/pace/internal/runner"
 )
 
 var runCommand = gear.NewExecutableCommand("run", "Run a specified task").
 	Args(
-		gear.NewStringArg("task", "Name of the task to run")).
+		gear.NewStringArg("task", "Name of the task to run").AsOptional()).
 	Handler(runHandler)
 
 func init() {
@@ -28,7 +27,6 @@ func runHandler(ctx *gear.Context, args gear.ValidatedArgs) error {
 
 	task, exists := config.GetTaskOrDefault(taskName)
 	if !exists {
-		logger.Error("Task '%s' not found", taskName)
 		return fmt.Errorf("task '%s' not found", taskName)
 	}
 

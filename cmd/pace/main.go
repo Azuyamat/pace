@@ -1,18 +1,16 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/azuyamat/pace/internal/command"
+	"github.com/azuyamat/pace/internal/logger"
 )
-
-const ConfigFile = "config.pace"
 
 func main() {
 	err := command.RootCommand.Run(os.Args[1:])
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		logger.Error("%s", err.Error())
 		os.Exit(1)
 	}
 }

@@ -27,24 +27,24 @@ Create a `config.pace` file:
 ```pace
 default build
 
-task build {
+task build [b] {
     description "Build the application"
     command "go build -o bin/app main.go"
-    inputs ["**/*.go"]
-    outputs ["bin/app"]
+    inputs [**/*.go]
+    outputs [bin/app]
     cache true
 }
 
-task test {
+task test [t] {
     description "Run tests"
     command "go test ./..."
-    before ["build"]
+    requires [build]
 }
 
-task dev {
+task dev [d] {
     description "Development server with auto-reload"
     watch true
-    inputs ["**/*.go"]
+    inputs [**/*.go]
     command "go run main.go"
 }
 ```
@@ -71,9 +71,10 @@ New to Pace? Here's where to start:
 
 1. **[Installation](installation.md)** - Install Pace on your system
 2. **[Quick Start Guide](quick-start.md)** - Learn the basics in 5 minutes
-3. **[Configuration Reference](configuration.md)** - Complete configuration guide
-4. **[Commands Reference](commands/list.md)** - Explore all available commands
-5. **[Examples](examples.md)** - Practical examples for different use cases
+3. **[Project Templating](templating.md)** - Auto-generate project configurations
+4. **[Configuration Reference](configuration.md)** - Complete configuration guide
+5. **[Commands Reference](commands/list.md)** - Explore all available commands
+6. **[Examples](examples.md)** - Practical examples for different use cases
 
 ## Key Features
 
@@ -83,7 +84,9 @@ Chain tasks together with automatic ordering:
 
 ```pace
 task deploy {
-    before ["test", "build"]
+    description "Deploy application"
+    requires [test, lint]
+    depends-on [build]
     command "./scripts/deploy.sh"
 }
 ```

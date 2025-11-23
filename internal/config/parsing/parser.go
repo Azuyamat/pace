@@ -1,8 +1,9 @@
-package config
+package parsing
 
 import (
 	"fmt"
 
+	"github.com/azuyamat/pace/internal/config/types"
 	"github.com/azuyamat/pace/internal/models"
 )
 
@@ -13,9 +14,10 @@ type Parser struct {
 	errors         []error
 	input          string
 	propertyParser *PropertyParser
+	helper         *ParseHelper
 }
 
-func Parse(input string) (*Config, error) {
+func Parse(input string) (*types.Config, error) {
 	lexer := NewLexer(input)
 	parser := NewParser(lexer)
 	return parser.Parse()
@@ -28,6 +30,7 @@ func NewParser(lexer *Lexer) *Parser {
 		input:  lexer.GetInput(),
 	}
 	p.propertyParser = NewPropertyParser(p)
+	p.helper = NewParseHelper(p)
 	p.advance()
 	p.advance()
 	return p
@@ -58,26 +61,12 @@ func (p *Parser) expect(tokenType TokenType) error {
 	return nil
 }
 
-func (p *Parser) expectKeyword(keyword string) error {
-	if !p.currentToken.IsKeyword(keyword) {
-		return p.createError(
-			fmt.Sprintf("Expected keyword '%s' but got %s with value %q", keyword, p.currentToken.Type.String(), p.currentToken.Literal),
-		).WithContext(fmt.Sprintf("Looking for '%s' keyword", keyword))
-	}
-	p.advance()
-	return nil
-}
-
-func (p *Parser) consume() {
-	p.advance()
-}
-
 func (p *Parser) isAtEnd() bool {
 	return p.currentToken.Is(TOKEN_EOF)
 }
 
-func (p *Parser) Parse() (*Config, error) {
-	config := &Config{
+func (p *Parser) Parse() (*types.Config, error) {
+	config := &types.Config{
 		Tasks:     make(map[string]models.Task),
 		Hooks:     make(map[string]models.Hook),
 		Globals:   make(map[string]string),

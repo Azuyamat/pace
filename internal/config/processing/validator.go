@@ -1,17 +1,19 @@
-package config
+package processing
 
 import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/azuyamat/pace/internal/config/types"
 )
 
 type Validator struct {
-	config *Config
+	config *types.Config
 	errors []error
 }
 
-func NewValidator(config *Config) *Validator {
+func NewValidator(config *types.Config) *Validator {
 	return &Validator{
 		config: config,
 		errors: make([]error, 0),
@@ -65,15 +67,15 @@ func (v *Validator) validateHooks() {
 
 func (v *Validator) validateHookReferences() {
 	for taskName, task := range v.config.Tasks {
-		for _, hookName := range task.BeforeHooks {
+		for _, hookName := range task.Requires {
 			if _, exists := v.config.Hooks[hookName]; !exists {
-				v.addError(fmt.Errorf("task '%s' references non-existent before hook '%s'", taskName, hookName))
+				v.addError(fmt.Errorf("task '%s' references non-existent requires hook '%s'", taskName, hookName))
 			}
 		}
 
-		for _, hookName := range task.AfterHooks {
+		for _, hookName := range task.Triggers {
 			if _, exists := v.config.Hooks[hookName]; !exists {
-				v.addError(fmt.Errorf("task '%s' references non-existent after hook '%s'", taskName, hookName))
+				v.addError(fmt.Errorf("task '%s' references non-existent triggers hook '%s'", taskName, hookName))
 			}
 		}
 
@@ -93,7 +95,7 @@ func (v *Validator) validateHookReferences() {
 
 func (v *Validator) validateTaskDependencies() {
 	for taskName, task := range v.config.Tasks {
-		for _, depName := range task.Dependencies {
+		for _, depName := range task.DependsOn {
 			if _, exists := v.config.Tasks[depName]; !exists {
 				v.addError(fmt.Errorf("task '%s' depends on non-existent task '%s'", taskName, depName))
 			}
@@ -127,7 +129,7 @@ func (v *Validator) isCyclic(taskName string, visited, recStack map[string]bool)
 		return false
 	}
 
-	for _, dep := range task.Dependencies {
+	for _, dep := range task.DependsOn {
 		if !visited[dep] {
 			if v.isCyclic(dep, visited, recStack) {
 				return true
@@ -194,10 +196,6 @@ func (v *Validator) validateRetry() {
 	for name, task := range v.config.Tasks {
 		if task.Retry < 0 {
 			v.addError(fmt.Errorf("task '%s' has negative retry count: %d", name, task.Retry))
-		}
-		if task.Retry > 0 && task.RetryDelay == "" {
-			// Warning: retry without delay might hammer the system
-			// But we won't make it an error
 		}
 	}
 }
