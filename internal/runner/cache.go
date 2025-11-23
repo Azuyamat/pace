@@ -158,16 +158,16 @@ func (r *Runner) needsRerun(taskName string) (bool, error) {
 		return true, nil // Command changed, need to run
 	}
 
-	if len(cache.Dependencies) != len(task.Dependencies) {
+	if len(cache.Dependencies) != len(task.DependsOn) {
 		return true, nil
 	}
-	for i, dep := range task.Dependencies {
+	for i, dep := range task.DependsOn {
 		if i >= len(cache.Dependencies) || cache.Dependencies[i] != dep {
 			return true, nil
 		}
 	}
 
-	for _, depName := range task.Dependencies {
+	for _, depName := range task.DependsOn {
 		depTask, exists := r.Config.Tasks[depName]
 		if !exists {
 			continue
@@ -263,7 +263,7 @@ func (r *Runner) updateCache(taskName string) error {
 	}
 
 	depHashes := make(map[string]string)
-	for _, depName := range task.Dependencies {
+	for _, depName := range task.DependsOn {
 		depTask, exists := r.Config.Tasks[depName]
 		if !exists {
 			continue
@@ -284,7 +284,7 @@ func (r *Runner) updateCache(taskName string) error {
 		OutputsHash:  outputsHash,
 		LastRunTime:  time.Now(),
 		CommandHash:  computeStringHash(task.Command),
-		Dependencies: task.Dependencies,
+		Dependencies: task.DependsOn,
 		DepHashes:    depHashes,
 	}
 

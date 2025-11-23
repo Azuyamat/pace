@@ -1,4 +1,4 @@
-package config
+package types
 
 import (
 	"fmt"
@@ -110,16 +110,16 @@ func taskString(task models.Task) string {
 		builder.WriteString(fmt.Sprintf("    outputs %s\n", formatStringSlice(task.Outputs)))
 	}
 
-	if len(task.Dependencies) > 0 {
-		builder.WriteString(fmt.Sprintf("    dependencies %s\n", formatStringSlice(task.Dependencies)))
+	if len(task.DependsOn) > 0 {
+		builder.WriteString(fmt.Sprintf("    depends-on %s\n", formatStringSlice(task.DependsOn)))
 	}
 
-	if len(task.BeforeHooks) > 0 {
-		builder.WriteString(fmt.Sprintf("    before %s\n", formatStringSlice(task.BeforeHooks)))
+	if len(task.Requires) > 0 {
+		builder.WriteString(fmt.Sprintf("    requires %s\n", formatStringSlice(task.Requires)))
 	}
 
-	if len(task.AfterHooks) > 0 {
-		builder.WriteString(fmt.Sprintf("    after %s\n", formatStringSlice(task.AfterHooks)))
+	if len(task.Triggers) > 0 {
+		builder.WriteString(fmt.Sprintf("    triggers %s\n", formatStringSlice(task.Triggers)))
 	}
 
 	if len(task.OnSuccess) > 0 {
@@ -164,6 +164,10 @@ func taskString(task models.Task) string {
 
 	if task.RetryDelay != "" {
 		builder.WriteString(fmt.Sprintf("    retry_delay \"%s\"\n", task.RetryDelay))
+	}
+
+	if task.When != "" {
+		builder.WriteString(fmt.Sprintf("    when \"%s\"\n", task.When))
 	}
 
 	if task.Args != nil {
@@ -219,12 +223,14 @@ func formatStringMap(m map[string]string) string {
 	if len(m) == 0 {
 		return "{}"
 	}
-	var pairs []string
+	var builder strings.Builder
+	builder.WriteString("{\n")
 	keys := sortedKeys(m)
 	for _, key := range keys {
-		pairs = append(pairs, fmt.Sprintf("%s: \"%s\"", key, escapeString(m[key])))
+		builder.WriteString(fmt.Sprintf("        %s = %s\n", key, escapeString(m[key])))
 	}
-	return "{" + strings.Join(pairs, ", ") + "}"
+	builder.WriteString("    }")
+	return builder.String()
 }
 
 func escapeString(s string) string {
@@ -242,28 +248,4 @@ func sortedKeys[T any](m map[string]T) []string {
 	}
 	sort.Strings(keys)
 	return keys
-}
-
-func UpdateGitignore(projectPath string) error {
-	gitignorePath := fmt.Sprintf("%s/.gitignore", projectPath)
-
-	content, err := os.ReadFile(gitignorePath)
-	if err != nil && !os.IsNotExist(err) {
-		return err
-	}
-
-	gitignoreContent := string(content)
-	cacheEntry := ".pace-cache/"
-
-	if strings.Contains(gitignoreContent, cacheEntry) {
-		return nil
-	}
-
-	if len(gitignoreContent) > 0 && !strings.HasSuffix(gitignoreContent, "\n") {
-		gitignoreContent += "\n"
-	}
-
-	gitignoreContent += cacheEntry + "\n"
-
-	return os.WriteFile(gitignorePath, []byte(gitignoreContent), 0644)
 }

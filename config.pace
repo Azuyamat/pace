@@ -1,29 +1,46 @@
+default build
+
+task build {
+    command "go build -o bin/pace ./cmd\pace"
+    description "Build the application"
+    inputs ["**/*.go", "go.mod", "go.sum"]
+    outputs ["bin/pace"]
+    cache true
+}
+
+task run {
+    command "go run ./cmd\pace"
+    description "Run the application"
+    inputs ["**/*.go"]
+    watch true
+}
+
 task test {
-	command "echo 'Test out pace'"
-	description "A simple test task"
-
-	dependencies ["extra", "extraJeff", "echoTime"]
-	working_dir "./internal/runner"
-	parallel true
+    command "go test ./..."
+    description "Run tests"
+    inputs ["**/*.go"]
+    cache true
 }
 
-task extra {
-	command "echo 'This is an extra task'"
-	description "An extra task for demonstration"
-	working_dir "./internal"
-	parallel true
+task tidy {
+    command "go mod tidy"
+    description "Tidy go.mod and go.sum"
+    inputs ["go.mod"]
 }
 
-task extraJeff {
-	command "echo 'This is another extra task'"
-	description "Another extra task for demonstration"
-	working_dir "./internal/runner"
-	parallel true
+task vet {
+    command "go vet ./..."
+    description "Run go vet"
+    inputs ["**/*.go"]
+    cache true
 }
 
-task echoTime {
-	command "date"
-	description "Echo the current date and time"
-	working_dir "./"
-	parallel false
+hook clean {
+    command "if exist bin rmdir /s /q bin"
+    description "Clean build artifacts"
+}
+
+hook fmt {
+    command "go fmt ./..."
+    description "Format code"
 }

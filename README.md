@@ -63,20 +63,34 @@ Download the appropriate binary for your platform from the [releases page](https
 
 ## Quick Start
 
-Create a `config.pace` file in your project root:
+### Auto-generate Configuration (Recommended)
+
+Let Pace automatically generate a configuration for your project:
+
+```bash
+cd your-project
+pace init
+```
+
+Pace will detect your project type (Go, Node.js, Python, Rust) and create an optimized `config.pace` with appropriate tasks, caching, and file patterns.
+
+### Manual Configuration
+
+Alternatively, create a `config.pace` file in your project root:
 
 ```pace
 default build
 
-task build {
+task build [b] {
     description "Build the project"
     command "go build -o bin/app main.go"
-    before ["test"]
-    inputs ["**/*.go"]
-    outputs ["bin/app"]
+    requires [test]
+    inputs [**/*.go]
+    outputs [bin/app]
+    cache true
 }
 
-hook "test" {
+hook test {
     description "Run tests"
     command "go test ./..."
 }
@@ -111,7 +125,26 @@ task build {
 
 ### Aliases
 
-Create shortcuts for tasks:
+Create shortcuts for tasks using inline syntax:
+
+```pace
+task build [b] {
+    description "Build the application"
+    command "go build -o bin/app main.go"
+}
+
+task test [t] {
+    description "Run tests"
+    command "go test ./..."
+}
+
+task dev [d] {
+    description "Start development server"
+    command "go run main.go"
+}
+```
+
+Or use standalone alias statements:
 
 ```pace
 alias b build
@@ -128,34 +161,54 @@ pace run b    # same as: pace run build
 ### Task Properties
 
 ```pace
-task example {
-    description "Example task"
+task example [ex] {
+    description "Example task with all properties"
     command "echo 'Hello World'"
 
-    before ["setup"]
-    after ["cleanup"]
-    on_success ["notify"]
-    on_failure ["alert"]
+    # Dependencies and hooks
+    depends-on [other-task]    # Tasks that must complete before this one
+    requires [setup]           # Hooks to run before task
+    triggers [cleanup]         # Hooks to run after task
+    on_success [notify]        # Hooks to run on success
+    on_failure [alert]         # Hooks to run on failure
 
-    inputs ["src/**/*.go", "go.mod"]
-    outputs ["bin/app"]
+    # File tracking for caching
+    inputs [src/**/*.go, go.mod]
+    outputs [bin/app]
 
-    cache true
-    timeout "10m"
-    retry 3
-    retry_delay "5s"
+    # Performance and behavior
+    cache true                 # Enable smart caching
+    timeout "10m"              # Maximum execution time
+    retry 3                    # Number of retry attempts
+    retry_delay "5s"           # Delay between retries
 
-    working_dir "src"
+    # Execution environment
+    working_dir "src"          # Working directory for command
     env {
-        "NODE_ENV" "production"
-        "DEBUG" "false"
+        NODE_ENV = production
+        DEBUG = false
     }
 
-    silent false
-    parallel false
-    continue_on_error false
+    # Conditional execution
+    when "platform == linux"   # Only run on Linux
+
+    # Flags
+    silent false               # Suppress output
+    parallel false             # Run dependencies in parallel
+    continue_on_error false    # Continue if task fails
+    watch false                # Enable file watching
 }
 ```
+
+**Property Defaults:**
+- `cache`: false
+- `parallel`: false
+- `silent`: false
+- `continue_on_error`: false
+- `watch`: false
+- `retry`: 0
+
+**Note:** You can use identifiers or strings in arrays. Arrays support both `[item1, item2]` and `["item1", "item2"]` syntax.
 
 ### Arguments
 
@@ -245,22 +298,25 @@ Syntax highlighting for `.pace` files is available. Check the [vscode-pace](vsco
 default all
 
 task all {
-    before ["backend", "frontend"]
+    description "Build all components"
+    depends-on [backend, frontend]
     command "echo 'Build complete'"
 }
 
-task backend {
+task backend [be] {
+    description "Build Go backend"
     command "go build -o bin/server cmd/server/main.go"
-    inputs ["cmd/**/*.go", "internal/**/*.go"]
-    outputs ["bin/server"]
+    inputs [cmd/**/*.go, internal/**/*.go]
+    outputs [bin/server]
     cache true
 }
 
-task frontend {
+task frontend [fe] {
+    description "Build React frontend"
     command "npm run build"
     working_dir "frontend"
-    inputs ["frontend/src/**/*"]
-    outputs ["frontend/dist/**/*"]
+    inputs [frontend/src/**/*]
+    outputs [frontend/dist/**/*]
     cache true
 }
 ```
@@ -268,25 +324,42 @@ task frontend {
 ### Development Workflow
 
 ```pace
-task dev {
-    description "Start development server"
-    before ["generate"]
+var app_name = "myapp"
+
+task dev [d] {
+    description "Start development server with hot reload"
+    requires [generate]
     command "go run cmd/server/main.go"
+    watch true
+    inputs [**/*.go]
 }
 
-hook "generate" {
+hook generate {
+    description "Generate code"
     command "go generate ./..."
 }
 
-task test {
+task test [t] {
+    description "Run all tests"
     command "go test -v ./..."
-    inputs ["**/*.go"]
+    inputs [**/*.go]
     cache true
 }
 
-task lint {
+task lint [l] {
+    description "Lint Go code"
     command "golangci-lint run"
-    inputs ["**/*.go"]
+    inputs [**/*.go]
+    cache true
+}
+
+task build [b] {
+    description "Build production binary"
+    command "go build -o bin/${app_name} cmd/server/main.go"
+    requires [test, lint]
+    inputs [**/*.go]
+    outputs [bin/${app_name}]
+    cache true
 }
 ```
 

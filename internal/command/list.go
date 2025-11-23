@@ -122,10 +122,10 @@ func printTaskNode(cfg *config.Config, taskName string, prefix string, visited m
 	logger.Printf("%s%s%s\n", prefix, taskName, defaultMarker)
 	visited[taskName] = true
 
-	if len(task.Dependencies) > 0 {
+	if len(task.DependsOn) > 0 {
 		ancestry[taskName] = true
-		for i, dep := range task.Dependencies {
-			isLast := i == len(task.Dependencies)-1
+		for i, dep := range task.DependsOn {
+			isLast := i == len(task.DependsOn)-1
 			var newPrefix string
 			if isLast {
 				logger.Printf("%s  └── ", prefix)

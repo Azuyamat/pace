@@ -15,15 +15,16 @@ type TaskArgs struct {
 
 type Task struct {
 	Name            string
+	Alias           string
 	Command         string
 	Inputs          []string
 	Outputs         []string
-	Dependencies    []string
+	DependsOn       []string
 	Env             map[string]string
 	Cache           bool
 	WorkingDir      string
-	BeforeHooks     []string
-	AfterHooks      []string
+	Requires        []string
+	Triggers        []string
 	OnSuccess       []string
 	OnFailure       []string
 	Description     string
@@ -34,6 +35,7 @@ type Task struct {
 	Timeout         string
 	Retry           int
 	RetryDelay      string
-	Args            *TaskArgs // Argument definition
-	ExtraArgs       []string  // Additional arguments passed at runtime
+	Args            *TaskArgs
+	ExtraArgs       []string
+	When            string
 }

@@ -1,6 +1,8 @@
-package config
+package parsing
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type ParseHelper struct {
 	parser *Parser
@@ -26,9 +28,9 @@ func (ph *ParseHelper) ParseStringArray(contextName, hintExample string) ([]stri
 			break
 		}
 
-		if ph.parser.currentToken.Type != TOKEN_STRING {
+		if !ph.parser.currentToken.IsOneOf(TOKEN_STRING, TOKEN_IDENTIFIER) {
 			return nil, ph.parser.createError(
-				fmt.Sprintf("Expected string value but got %s", ph.parser.currentToken.Type.String()),
+				fmt.Sprintf("Expected string or identifier value but got %s", ph.parser.currentToken.Type.String()),
 			).WithContext(contextName).WithHint(hintExample)
 		}
 
@@ -61,17 +63,23 @@ func (ph *ParseHelper) ParseStringMap(keyContext, valueContext string) (map[stri
 			break
 		}
 
-		if ph.parser.currentToken.Type != TOKEN_STRING {
+		if !ph.parser.currentToken.IsOneOf(TOKEN_STRING, TOKEN_IDENTIFIER) {
 			return nil, ph.parser.createError(
-				fmt.Sprintf("Expected %s (string) but got %s", keyContext, ph.parser.currentToken.Type.String()),
+				fmt.Sprintf("Expected %s (string or identifier) but got %s", keyContext, ph.parser.currentToken.Type.String()),
 			)
 		}
 		key := ph.parser.currentToken.Literal
 		ph.parser.advance()
 
-		if ph.parser.currentToken.Type != TOKEN_STRING {
+		if err := ph.parser.expect(TOKEN_EQUALS); err != nil {
 			return nil, ph.parser.createError(
-				fmt.Sprintf("Expected %s (string) but got %s", valueContext, ph.parser.currentToken.Type.String()),
+				fmt.Sprintf("Expected '=' after %s", keyContext),
+			).WithHint("Use format: KEY=value")
+		}
+
+		if !ph.parser.currentToken.IsOneOf(TOKEN_STRING, TOKEN_IDENTIFIER, TOKEN_BOOLEAN) {
+			return nil, ph.parser.createError(
+				fmt.Sprintf("Expected %s (string, identifier, or boolean) but got %s", valueContext, ph.parser.currentToken.Type.String()),
 			)
 		}
 		value := ph.parser.currentToken.Literal
@@ -100,7 +108,7 @@ func (ph *ParseHelper) ParseBoolean(propertyName string) (bool, error) {
 }
 
 func (ph *ParseHelper) ParseString(propertyName, hint string) (string, error) {
-	if ph.parser.currentToken.Type != TOKEN_STRING {
+	if ph.parser.currentToken.Type != TOKEN_STRING && ph.parser.currentToken.Type != TOKEN_MULTILINE_STRING {
 		return "", ph.parser.createError(
 			fmt.Sprintf("Expected %s value (string) but got %s", propertyName, ph.parser.currentToken.Type.String()),
 		).WithContext(fmt.Sprintf("Parsing '%s' property", propertyName)).WithHint(hint)
@@ -108,4 +116,28 @@ func (ph *ParseHelper) ParseString(propertyName, hint string) (string, error) {
 	value := ph.parser.currentToken.Literal
 	ph.parser.advance()
 	return value, nil
+}
+
+func (ph *ParseHelper) ParseNumber(propertyName string) (int, error) {
+	if ph.parser.currentToken.Type != TOKEN_NUMBER {
+		return 0, ph.parser.createError(
+			fmt.Sprintf("Expected %s value (number) but got %s", propertyName, ph.parser.currentToken.Type.String()),
+		).WithContext(fmt.Sprintf("Parsing '%s' property", propertyName)).WithHint(fmt.Sprintf("%s must be a number", propertyName))
+	}
+	var value int
+	fmt.Sscanf(ph.parser.currentToken.Literal, "%d", &value)
+	ph.parser.advance()
+	return value, nil
+}
+
+func isLetter(char byte) bool {
+	return (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || char == '_' || char == '-'
+}
+
+func isDigit(char byte) bool {
+	return char >= '0' && char <= '9'
+}
+
+func isWhitespace(char byte) bool {
+	return char == ' ' || char == '\t'
 }

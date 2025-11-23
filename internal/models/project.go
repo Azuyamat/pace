@@ -9,3 +9,18 @@ const (
 	ProjectTypePython  ProjectType = "python"
 	ProjectTypeRust    ProjectType = "rust"
 )
+
+func ParseProjectType(s string) ProjectType {
+	switch s {
+	case "go":
+		return ProjectTypeGo
+	case "node":
+		return ProjectTypeNode
+	case "python":
+		return ProjectTypePython
+	case "rust":
+		return ProjectTypeRust
+	default:
+		return ProjectTypeUnknown
+	}
+}

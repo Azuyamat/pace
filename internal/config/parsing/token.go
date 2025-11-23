@@ -1,4 +1,4 @@
-package config
+package parsing
 
 import (
 	"fmt"
@@ -139,12 +139,10 @@ func (t Token) LiteralIs(expected string, ignoreCase bool) bool {
 	return strings.Compare(t.Literal, expected) == 0
 }
 
-// IsKeyword checks if the token is an identifier with a specific keyword value
 func (t Token) IsKeyword(keyword string) bool {
 	return t.Is(TOKEN_IDENTIFIER) && t.LiteralIs(keyword, true)
 }
 
-// ExpectKeyword checks if the token is an identifier with a specific keyword
 func (t Token) ExpectKeyword(keyword string) error {
 	if !t.IsKeyword(keyword) {
 		return fmt.Errorf("expected keyword '%s', got %s with value %q at line %d, column %d",

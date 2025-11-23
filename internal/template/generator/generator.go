@@ -1,4 +1,4 @@
-package template
+package generator
 
 import (
 	"github.com/azuyamat/pace/internal/config"
@@ -62,6 +62,12 @@ func GetGeneratorByProjectType(projectType models.ProjectType) Generator {
 	switch projectType {
 	case models.ProjectTypeGo:
 		return NewGoGenerator()
+	case models.ProjectTypeNode:
+		return NewNodeGenerator()
+	case models.ProjectTypePython:
+		return NewPythonGenerator()
+	case models.ProjectTypeRust:
+		return NewRustGenerator()
 	}
 	return nil
 }

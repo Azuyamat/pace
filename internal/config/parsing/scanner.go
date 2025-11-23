@@ -1,4 +1,4 @@
-package config
+package parsing
 
 type Scanner struct {
 	input        string
@@ -67,10 +67,9 @@ func (s *Scanner) ScanString() string {
 }
 
 func (s *Scanner) ScanMultilineString() string {
-	// Skip the opening triple quotes
-	s.ReadChar() // Skip second quote
-	s.ReadChar() // Skip third quote
-	s.ReadChar() // Move to first char of content
+	s.ReadChar()
+	s.ReadChar()
+	s.ReadChar()
 
 	position := s.position
 
@@ -79,12 +78,10 @@ func (s *Scanner) ScanMultilineString() string {
 			break
 		}
 
-		// Check for closing triple quotes
 		if s.char == '"' && s.PeekChar() == '"' && s.position+2 < len(s.input) && s.input[s.position+2] == '"' {
 			result := s.input[position:s.position]
-			s.ReadChar() // Skip first closing quote
-			s.ReadChar() // Skip second closing quote
-			// Third will be consumed by caller
+			s.ReadChar()
+			s.ReadChar()
 			return result
 		}
 

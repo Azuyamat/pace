@@ -1,4 +1,4 @@
-package config
+package parsing
 
 type Lexer struct {
 	scanner *Scanner
@@ -21,11 +21,6 @@ func (l *Lexer) GetInput() string {
 func (l *Lexer) Position() (line, column int) {
 	_, _, _, line, column = l.scanner.GetState()
 	return line, column
-}
-
-func (l *Lexer) isAtEnd() bool {
-	_, _, char, _, _ := l.scanner.GetState()
-	return char == 0
 }
 
 func (l *Lexer) NextToken() Token {
@@ -55,14 +50,12 @@ func (l *Lexer) NextToken() Token {
 	case '=':
 		token = l.makeSingleCharToken(TOKEN_EQUALS, line, column)
 	case '"':
-		// Check for triple-quoted string
 		if l.scanner.PeekChar() == '"' {
 			_, _, nextChar, _, _ := l.scanner.GetState()
-			l.scanner.ReadChar() // Consume second quote
+			l.scanner.ReadChar()
 			if l.scanner.PeekChar() == '"' {
 				token = l.scanMultilineString(line, column)
 			} else {
-				// Two quotes in a row, treat as empty string followed by quote
 				l.scanner.SetState(l.scanner.position-1, l.scanner.readPosition-1, nextChar, line, column)
 				token = l.scanString(line, column)
 			}

@@ -4,23 +4,35 @@ This guide will help you get started with Pace in just a few minutes.
 
 ## Create Your First Configuration
 
+### Option 1: Auto-generate (Recommended)
+
+Let Pace automatically generate a configuration for your project:
+
+```bash
+pace init
+```
+
+This will detect your project type (Go, Node.js, Python, Rust) and create an optimized `config.pace` with appropriate tasks. See [Project Templating](templating.md) for details.
+
+### Option 2: Manual Configuration
+
 Create a file named `config.pace` in your project root:
 
 ```pace
 # Set the default task
 default build
 
-# Define a build task
-task build {
+# Define a build task with alias
+task build [b] {
     description "Build the application"
     command "go build -o bin/app main.go"
-    inputs ["**/*.go"]
-    outputs ["bin/app"]
+    inputs [**/*.go]
+    outputs [bin/app]
     cache true
 }
 
 # Define a test task
-task test {
+task test [t] {
     description "Run tests"
     command "go test ./..."
 }
@@ -56,16 +68,16 @@ pace list --tree
 
 ## Add Dependencies
 
-Tasks can depend on other tasks:
+Tasks can depend on other tasks and hooks:
 
 ```pace
 task build {
     description "Build the application"
     command "go build -o bin/app main.go"
-    before ["test"]  # Run test before build
+    requires [test]  # Run test hook before build
 }
 
-task test {
+hook test {
     description "Run tests"
     command "go test ./..."
 }
@@ -73,7 +85,8 @@ task test {
 task deploy {
     description "Deploy to production"
     command "./scripts/deploy.sh"
-    before ["build"]  # Run build before deploy
+    depends-on [build]  # Ensure build completes before deploy
+    requires [test]     # Run test before deploy
 }
 ```
 
@@ -105,7 +118,26 @@ This will monitor all files matching the task's `inputs` patterns and re-execute
 
 ## Add Task Aliases
 
-Create shortcuts for frequently used tasks:
+Create shortcuts using inline syntax:
+
+```pace
+task build [b] {
+    description "Build application"
+    command "go build -o bin/app main.go"
+}
+
+task test [t] {
+    description "Run tests"
+    command "go test ./..."
+}
+
+task deploy [d] {
+    description "Deploy to production"
+    command "./scripts/deploy.sh"
+}
+```
+
+Or use standalone alias statements:
 
 ```pace
 alias b build
@@ -127,25 +159,23 @@ pace run t    # same as: pace run test
 ```pace
 default dev
 
-task dev {
+task dev [d] {
     description "Start development server"
     command "go run main.go"
-    before ["build"]
+    requires [build]
 }
 
-task build {
+task build [b] {
     description "Build the project"
     command "go build -o bin/app main.go"
-    inputs ["**/*.go"]
+    inputs [**/*.go]
     cache true
 }
 
-task test {
+task test [t] {
     description "Run tests"
     command "go test -v ./..."
 }
-
-alias t test
 ```
 
 ### Build and Test Pipeline
@@ -155,20 +185,20 @@ default all
 
 task all {
     description "Run full pipeline"
-    before ["lint", "test", "build"]
+    depends-on [lint, test, build]
 }
 
-task lint {
+task lint [l] {
     description "Run linter"
     command "golangci-lint run"
 }
 
-task test {
+task test [t] {
     description "Run tests"
     command "go test ./..."
 }
 
-task build {
+task build [b] {
     description "Build application"
     command "go build -o bin/app main.go"
     cache true
@@ -177,6 +207,7 @@ task build {
 
 ## Next Steps
 
+- [Project Templating](templating.md) - Auto-generate configurations for your projects
 - [Configuration Reference](configuration.md) - Learn about all configuration options
 - [Commands Reference](commands/list.md) - Explore all available commands
 - [Examples](examples.md) - See more practical examples

@@ -79,8 +79,8 @@ func (e *Executor) ExecuteTask(taskName string, task *models.Task, beforeHooks, 
 }
 
 func (e *Executor) ExecuteTaskWithContext(ctx context.Context, taskName string, task *models.Task, beforeHooks, afterHooks func([]string) error, updateCache func() error) error {
-	if !e.DryRun && len(task.BeforeHooks) > 0 {
-		if err := beforeHooks(task.BeforeHooks); err != nil {
+	if !e.DryRun && len(task.Requires) > 0 {
+		if err := beforeHooks(task.Requires); err != nil {
 			return err
 		}
 	}
@@ -164,8 +164,8 @@ func (e *Executor) ExecuteTaskWithContext(ctx context.Context, taskName string, 
 		e.log.Success("Task %q completed successfully", taskName)
 	}
 
-	if !e.DryRun && len(task.AfterHooks) > 0 {
-		if err := afterHooks(task.AfterHooks); err != nil {
+	if !e.DryRun && len(task.Triggers) > 0 {
+		if err := afterHooks(task.Triggers); err != nil {
 			return err
 		}
 	}

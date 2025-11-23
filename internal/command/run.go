@@ -10,7 +10,7 @@ import (
 
 var runCommand = gear.NewExecutableCommand("run", "Run a specified task").
 	Args(
-		gear.NewStringArg("task", "Name of the task to run")).
+		gear.NewStringArg("task", "Name of the task to run").AsOptional()).
 	Handler(runHandler)
 
 func init() {

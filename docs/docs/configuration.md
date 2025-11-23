@@ -72,7 +72,7 @@ default build
 
 ## Aliases
 
-Create shortcuts for task names:
+Create shortcuts for task names using the standalone `alias` keyword:
 
 ```pace
 alias b build
@@ -80,9 +80,24 @@ alias t test
 alias d deploy
 ```
 
+Alternatively, you can define aliases directly in the task definition:
+
+```pace
+task build [b] {
+    description "Build the application"
+    command "go build -o bin/app main.go"
+}
+
+task test [t] {
+    description "Run tests"
+    command "go test ./..."
+}
+```
+
 Usage:
 ```bash
 pace run b  # same as: pace run build
+pace run t  # same as: pace run test
 ```
 
 ## Tasks
@@ -162,30 +177,32 @@ task build {
 
 Default: `false`
 
-#### `dependencies` (array of strings)
-Tasks that must complete before this task runs (alias for `before`).
+#### `depends-on` (array of strings)
+Tasks that must complete before this task runs. Dependencies are executed in order.
 
 ```pace
 task deploy {
-    dependencies ["test", "build"]
+    depends-on [test, build]
 }
 ```
 
-#### `before` (array of strings)
+**Note:** You can use either identifiers or strings in arrays: `[test, build]` or `["test", "build"]`
+
+#### `requires` (array of strings)
 Hooks or tasks to run before this task.
 
 ```pace
 task build {
-    before ["test", "lint"]
+    requires [test, lint]
 }
 ```
 
-#### `after` (array of strings)
+#### `triggers` (array of strings)
 Hooks or tasks to run after this task completes.
 
 ```pace
 task build {
-    after ["notify"]
+    triggers [notify]
 }
 ```
 
@@ -194,7 +211,7 @@ Hooks or tasks to run only if this task succeeds.
 
 ```pace
 task deploy {
-    on_success ["notify_success"]
+    on_success [notify_success]
 }
 ```
 
@@ -203,7 +220,7 @@ Hooks or tasks to run only if this task fails.
 
 ```pace
 task deploy {
-    on_failure ["rollback", "notify_failure"]
+    on_failure [rollback, notify_failure]
 }
 ```
 
@@ -213,9 +230,9 @@ Environment variables to set for this task.
 ```pace
 task build {
     env {
-        "CGO_ENABLED" "0"
-        "GOOS" "linux"
-        "GOARCH" "amd64"
+        CGO_ENABLED = "0"
+        GOOS = "linux"
+        GOARCH = "amd64"
     }
 }
 ```
@@ -272,7 +289,7 @@ Whether dependencies can run in parallel.
 
 ```pace
 task all {
-    before ["backend", "frontend"]
+    depends-on [backend, frontend]
     parallel true  # Run backend and frontend simultaneously
 }
 ```
@@ -407,11 +424,6 @@ var build_dir = "bin"
 # Default task
 default build
 
-# Aliases
-alias b build
-alias t test
-alias d deploy
-
 # Hooks
 hook format {
     description "Format Go code"
@@ -424,39 +436,39 @@ hook lint {
 }
 
 # Tasks
-task test {
+task test [t] {
     description "Run all tests"
     command "go test -v ./..."
-    inputs ["**/*.go"]
+    inputs [**/*.go]
     timeout "5m"
     cache true
 }
 
-task build {
+task build [b] {
     description "Build the application"
     command "go build -ldflags '-X main.Version=${version}' -o ${build_dir}/${app_name} main.go"
-    before ["test", "format", "lint"]
-    inputs ["**/*.go", "go.mod", "go.sum"]
-    outputs ["${build_dir}/${app_name}"]
+    requires [test, format, lint]
+    inputs [**/*.go, go.mod, go.sum]
+    outputs [${build_dir}/${app_name}]
     cache true
     env {
-        "CGO_ENABLED" "0"
+        CGO_ENABLED = "0"
     }
 }
 
 task docker {
     description "Build Docker image"
     command "docker build -t ${app_name}:${version} ."
-    before ["build"]
-    inputs ["Dockerfile", "${build_dir}/${app_name}"]
+    depends-on [build]
+    inputs [Dockerfile, ${build_dir}/${app_name}]
 }
 
-task deploy {
+task deploy [d] {
     description "Deploy to production"
     command "./scripts/deploy.sh ${version}"
-    before ["docker"]
-    on_success ["notify_success"]
-    on_failure ["notify_failure", "rollback"]
+    depends-on [docker]
+    on_success [notify_success]
+    on_failure [notify_failure, rollback]
     retry 2
     retry_delay "10s"
     timeout "15m"

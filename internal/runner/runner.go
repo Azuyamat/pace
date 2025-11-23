@@ -12,17 +12,18 @@ import (
 )
 
 type Runner struct {
-	Config           *config.Config
-	completed        map[string]bool
-	running          map[string]bool
-	mu               sync.Mutex
-	DryRun           bool
-	Force            bool
-	log              *logger.Logger
-	shell            *Shell
-	executor         *Executor
-	dependencyRunner *DependencyRunner
-	hookExecutor     *HookExecutor
+	Config             *config.Config
+	completed          map[string]bool
+	running            map[string]bool
+	mu                 sync.Mutex
+	DryRun             bool
+	Force              bool
+	log                *logger.Logger
+	shell              *Shell
+	executor           *Executor
+	dependencyRunner   *DependencyRunner
+	hookExecutor       *HookExecutor
+	conditionEvaluator *ConditionEvaluator
 }
 
 func NewRunner(cfg *config.Config) *Runner {
@@ -42,6 +43,7 @@ func NewRunner(cfg *config.Config) *Runner {
 	r.dependencyRunner = NewDependencyRunner(r.RunTask, log)
 	r.dependencyRunner.SetContextRunner(r.RunTaskWithContext)
 	r.hookExecutor = NewHookExecutor(cfg.Hooks, executor, log)
+	r.conditionEvaluator = NewConditionEvaluator()
 
 	return r
 }
@@ -99,9 +101,24 @@ func (r *Runner) RunTaskWithContext(ctx context.Context, task models.Task, extra
 	r.running[task.Name] = true
 	r.mu.Unlock()
 
-	if len(task.Dependencies) > 0 {
-		dependencies := make([]models.Task, 0, len(task.Dependencies))
-		for _, depName := range task.Dependencies {
+	if task.When != "" {
+		shouldRun, err := r.conditionEvaluator.Evaluate(task.When)
+		if err != nil {
+			return fmt.Errorf("failed to evaluate condition for task %q: %v", task.Name, err)
+		}
+		if !shouldRun {
+			r.log.Info("Skipping task %q (condition not met: %s)", task.Name, task.When)
+			r.mu.Lock()
+			r.completed[task.Name] = true
+			delete(r.running, task.Name)
+			r.mu.Unlock()
+			return nil
+		}
+	}
+
+	if len(task.DependsOn) > 0 {
+		dependencies := make([]models.Task, 0, len(task.DependsOn))
+		for _, depName := range task.DependsOn {
 			depTask, exists := r.Config.GetTask(depName)
 			if !exists {
 				return fmt.Errorf("dependency task %q not found for task %q", depName, task.Name)
@@ -142,11 +159,11 @@ func (r *Runner) RunTaskWithContext(ctx context.Context, task models.Task, extra
 			r.log.Warning("[DRY RUN] Extra arguments provided but command has no placeholders ($@, $1, $2, etc.): %v", task.ExtraArgs)
 		}
 		r.log.Debug("[DRY RUN] Would execute task %q: %s", task.Name, cmdStr)
-		if len(task.BeforeHooks) > 0 {
-			r.log.Debug("[DRY RUN] Would run before hooks: %v", task.BeforeHooks)
+		if len(task.Requires) > 0 {
+			r.log.Debug("[DRY RUN] Would run before hooks: %v", task.Requires)
 		}
-		if len(task.AfterHooks) > 0 {
-			r.log.Debug("[DRY RUN] Would run after hooks: %v", task.AfterHooks)
+		if len(task.Triggers) > 0 {
+			r.log.Debug("[DRY RUN] Would run after hooks: %v", task.Triggers)
 		}
 		if len(task.OnSuccess) > 0 {
 			r.log.Debug("[DRY RUN] Would run on_success hooks: %v", task.OnSuccess)
