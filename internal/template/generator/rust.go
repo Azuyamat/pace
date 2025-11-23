@@ -47,7 +47,7 @@ func generateRust() (config.Config, error) {
 		Alias:       "r",
 		Command:     "cargo build --release",
 		Description: "Build release binary",
-		Requires:    []string{"test"},
+		DependsOn:   []string{"test"},
 		Cache:       true,
 		Inputs:      []string{"src/**/*.rs", "Cargo.toml", "Cargo.lock"},
 		Outputs:     []string{"target/release"},

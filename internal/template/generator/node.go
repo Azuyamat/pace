@@ -35,14 +35,10 @@ func generateNode() (config.Config, error) {
 
 	cfg.DefaultTask = determineDefaultTask(pkg.Scripts)
 
-	cfg.Tasks["install"] = models.Task{
+	cfg.Hooks["install"] = models.Hook{
 		Name:        "install",
-		Alias:       "i",
 		Command:     packageManager + " install",
 		Description: "Install dependencies",
-		Cache:       true,
-		Inputs:      []string{"package.json", getPackageLockFile(packageManager)},
-		Outputs:     []string{"node_modules"},
 	}
 
 	for scriptName, scriptCommand := range pkg.Scripts {
@@ -214,14 +210,10 @@ func generateTaskFromScript(name, command, pm string) models.Task {
 func generateDefaultNode(cfg *config.Config) (config.Config, error) {
 	cfg.DefaultTask = "build"
 
-	cfg.Tasks["install"] = models.Task{
+	cfg.Hooks["install"] = models.Hook{
 		Name:        "install",
-		Alias:       "i",
 		Command:     "npm install",
 		Description: "Install dependencies",
-		Cache:       true,
-		Inputs:      []string{"package.json", "package-lock.json"},
-		Outputs:     []string{"node_modules"},
 	}
 
 	cfg.Tasks["build"] = models.Task{
