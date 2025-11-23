@@ -107,6 +107,24 @@ func (l *Logger) Debug(format string, args ...interface{}) {
 	fmt.Printf("%s %s %s %s\n", l.timestamp(), badge, icon, coloredMsg)
 }
 
+func (l *Logger) TaskOutput(taskName string, format string, args ...interface{}) {
+	if !l.enabled || l.level > LevelInfo {
+		return
+	}
+	msg := fmt.Sprintf(format, args...)
+	taskBadge := ColorCyan.Wrap("[" + taskName + "]")
+	fmt.Printf("%s %s %s\n", l.timestamp(), taskBadge, ColorWhite.Wrap(msg))
+}
+
+func (l *Logger) TaskError(taskName string, format string, args ...interface{}) {
+	if !l.enabled || l.level > LevelInfo {
+		return
+	}
+	msg := fmt.Sprintf(format, args...)
+	taskBadge := ColorRed.Wrap("[" + taskName + "]")
+	fmt.Printf("%s %s %s\n", l.timestamp(), taskBadge, ColorRed.Bright().Wrap(msg))
+}
+
 func (l *Logger) Print(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	fmt.Println(msg)

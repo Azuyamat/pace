@@ -1,5 +1,29 @@
-task build {
-    command "go build -o bin/main ./..."
-    inputs ["**/*.go"]
-    outputs ["bin/main"]
+task test {
+	command "echo 'Test out pace'"
+	description "A simple test task"
+
+	dependencies ["extra", "extraJeff", "echoTime"]
+	working_dir "./internal/runner"
+	parallel true
+}
+
+task extra {
+	command "echo 'This is an extra task'"
+	description "An extra task for demonstration"
+	working_dir "./internal"
+	parallel true
+}
+
+task extraJeff {
+	command "echo 'This is another extra task'"
+	description "Another extra task for demonstration"
+	working_dir "./internal/runner"
+	parallel true
+}
+
+task echoTime {
+	command "date"
+	description "Echo the current date and time"
+	working_dir "./"
+	parallel false
 }

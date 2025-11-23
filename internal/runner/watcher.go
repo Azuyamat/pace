@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -88,71 +87,7 @@ func (w *Watcher) setupWatchPaths(watcher *fsnotify.Watcher) error {
 }
 
 func (w *Watcher) expandPattern(pattern string) ([]string, error) {
-	if !containsDoublestar(pattern) {
-		return filepath.Glob(pattern)
-	}
-
-	return w.expandDoublestar(pattern)
-}
-
-func containsDoublestar(pattern string) bool {
-	return len(pattern) >= 2 && (pattern[:2] == "**" ||
-		(len(pattern) >= 3 && pattern[len(pattern)-3:] == "/**") ||
-		strings.Contains(pattern, "/**/") || strings.Contains(pattern, "\\**\\"))
-}
-
-func (w *Watcher) expandDoublestar(pattern string) ([]string, error) {
-	var matches []string
-
-	parts := splitPattern(pattern)
-	if len(parts) == 0 {
-		return nil, fmt.Errorf("invalid pattern")
-	}
-
-	baseDir := "."
-	filePattern := parts[len(parts)-1]
-
-	err := filepath.Walk(baseDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return nil
-		}
-
-		if !info.IsDir() {
-			if matched, _ := filepath.Match(filePattern, info.Name()); matched {
-				matches = append(matches, path)
-			}
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return matches, nil
-}
-
-func splitPattern(pattern string) []string {
-	var parts []string
-	var current strings.Builder
-
-	for i := 0; i < len(pattern); i++ {
-		if pattern[i] == '/' || pattern[i] == '\\' {
-			if current.Len() > 0 {
-				parts = append(parts, current.String())
-				current.Reset()
-			}
-		} else {
-			current.WriteByte(pattern[i])
-		}
-	}
-
-	if current.Len() > 0 {
-		parts = append(parts, current.String())
-	}
-
-	return parts
+	return expandGlobPattern(pattern)
 }
 
 func (w *Watcher) eventLoop(watcher *fsnotify.Watcher) error {
@@ -278,21 +213,17 @@ func (w *Watcher) runTaskAsync(done chan<- struct{}) {
 
 	w.runner.Reset()
 	w.log.Debug("Starting task in goroutine...")
-	errChan := make(chan error, 1)
-	go func() {
-		err := w.runner.RunTask(w.task)
-		w.log.Debug("Task goroutine finished with err: %v", err)
-		errChan <- err
-	}()
 
-	select {
-	case <-ctx.Done():
+	err := w.runner.RunTaskWithContext(ctx, w.task)
+	w.log.Debug("Task goroutine finished with err: %v", err)
+
+	if ctx.Err() == context.Canceled {
 		w.log.Warning("Task cancelled")
-	case err := <-errChan:
-		w.log.Debug("Received task completion")
-		if err != nil {
-			w.log.Error("%v", err)
-		}
+		return
+	}
+
+	if err != nil {
+		w.log.Error("%v", err)
 	}
 }
 

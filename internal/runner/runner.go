@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -39,6 +40,7 @@ func NewRunner(cfg *config.Config) *Runner {
 	}
 
 	r.dependencyRunner = NewDependencyRunner(r.RunTask, log)
+	r.dependencyRunner.SetContextRunner(r.RunTaskWithContext)
 	r.hookExecutor = NewHookExecutor(cfg.Hooks, executor, log)
 
 	return r
@@ -77,6 +79,10 @@ func (r *Runner) validateAndSetArgs(task *models.Task, extraArgs []string) error
 }
 
 func (r *Runner) RunTask(task models.Task, extraArgs ...string) error {
+	return r.RunTaskWithContext(context.Background(), task, extraArgs...)
+}
+
+func (r *Runner) RunTaskWithContext(ctx context.Context, task models.Task, extraArgs ...string) error {
 	if err := r.validateAndSetArgs(&task, extraArgs); err != nil {
 		return err
 	}
@@ -102,7 +108,7 @@ func (r *Runner) RunTask(task models.Task, extraArgs ...string) error {
 			}
 			dependencies = append(dependencies, depTask)
 		}
-		if err := r.dependencyRunner.RunDependencies(&task, dependencies); err != nil {
+		if err := r.dependencyRunner.RunDependenciesWithContext(ctx, &task, dependencies); err != nil {
 			return err
 		}
 	}
@@ -178,7 +184,7 @@ func (r *Runner) RunTask(task models.Task, extraArgs ...string) error {
 			return r.updateCache(task.Name)
 		}
 
-		execErr = r.executor.ExecuteTask(task.Name, &task, beforeHookFunc, afterHookFunc, updateCacheFunc)
+		execErr = r.executor.ExecuteTaskWithContext(ctx, task.Name, &task, beforeHookFunc, afterHookFunc, updateCacheFunc)
 		if execErr == nil {
 			break
 		}

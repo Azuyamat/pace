@@ -1,49 +1,52 @@
 package config
 
 import (
-	"fmt"
 	"os"
 	"regexp"
 	"strings"
+
+	"github.com/azuyamat/pace/internal/logger"
 )
 
 var varPattern = regexp.MustCompile(`\$\{([^}]+)\}`)
 
 type Resolver struct {
-	config *Config
+	config         *Config
+	unresolvedVars map[string]bool
 }
 
 func NewResolver(config *Config) *Resolver {
-	return &Resolver{config: config}
+	return &Resolver{
+		config:         config,
+		unresolvedVars: make(map[string]bool),
+	}
 }
 
-// ResolveString resolves variable references in a string
 func (r *Resolver) ResolveString(input string) string {
 	return varPattern.ReplaceAllStringFunc(input, func(match string) string {
-		// Extract variable name from ${VAR}
 		varName := match[2 : len(match)-1]
 
-		// Check in constants first
 		if value, exists := r.config.Constants[varName]; exists {
 			return value
 		}
 
-		// Check in globals
 		if value, exists := r.config.Globals[varName]; exists {
 			return value
 		}
 
-		// Check environment variables
 		if value := os.Getenv(varName); value != "" {
 			return value
 		}
 
-		// Return original if not found
+		if !r.unresolvedVars[varName] {
+			logger.Warning("Unresolved variable: ${%s}", varName)
+			r.unresolvedVars[varName] = true
+		}
+
 		return match
 	})
 }
 
-// ResolveStringSlice resolves variables in a slice of strings
 func (r *Resolver) ResolveStringSlice(slice []string) []string {
 	result := make([]string, len(slice))
 	for i, s := range slice {
@@ -110,41 +113,4 @@ func ExpandEnvVars(s string) string {
 	}
 
 	return result.String()
-}
-
-// EvaluateCondition evaluates simple conditional expressions
-func EvaluateCondition(condition string) (bool, error) {
-	condition = strings.TrimSpace(condition)
-
-	// Handle OS checks: OS == "windows" or OS == "linux"
-	if strings.Contains(condition, "OS") {
-		osPattern := regexp.MustCompile(`OS\s*==\s*"([^"]+)"`)
-		matches := osPattern.FindStringSubmatch(condition)
-		if len(matches) > 1 {
-			targetOS := strings.ToLower(matches[1])
-			currentOS := strings.ToLower(os.Getenv("GOOS"))
-			if currentOS == "" {
-				currentOS = "windows" // Default for this system
-			}
-			return currentOS == targetOS, nil
-		}
-	}
-
-	// Handle environment variable checks: ENV_VAR == "value"
-	envPattern := regexp.MustCompile(`([A-Z_][A-Z0-9_]*)\s*==\s*"([^"]+)"`)
-	matches := envPattern.FindStringSubmatch(condition)
-	if len(matches) > 2 {
-		envVar := matches[1]
-		expectedValue := matches[2]
-		actualValue := os.Getenv(envVar)
-		return actualValue == expectedValue, nil
-	}
-
-	// Handle boolean environment variables: ENV_VAR
-	if matched, _ := regexp.MatchString(`^[A-Z_][A-Z0-9_]*$`, condition); matched {
-		value := os.Getenv(condition)
-		return value != "" && value != "0" && strings.ToLower(value) != "false", nil
-	}
-
-	return false, fmt.Errorf("unable to evaluate condition: %s", condition)
 }
