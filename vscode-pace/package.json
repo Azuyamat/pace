@@ -2,7 +2,7 @@
   "name": "pace-language",
   "displayName": "Pace Task Runner Language",
   "description": "Syntax highlighting and autocomplete for Pace configuration files",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "PaceLanguageSupport",
   "icon": "./images/LogoPace-128x128.png",
   "engines": {
