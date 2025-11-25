@@ -4,6 +4,7 @@
   "description": "Syntax highlighting and autocomplete for Pace configuration files",
   "version": "0.3.0",
   "publisher": "PaceLanguageSupport",
+  "icon": "./images/LogoPace-128x128.png",
   "engines": {
     "vscode": "^1.75.0"
   },
