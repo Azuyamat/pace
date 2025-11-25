@@ -7,6 +7,8 @@
 
 A cross-platform task runner and build orchestration tool. Define tasks once, run them anywhere.
 
+[![Pace Logo](./public/LogoPace-320x320.png)](./public/LogoPace-320x320.png)
+
 ## Why Pace?
 
 If you've ever wanted `npm run` scripts but for Go, Rust, C++, or any other language—Pace is for you. Unlike Make (which has limited Windows support) or language-specific runners, Pace works the same on Windows, Linux, and macOS with an intuitive configuration syntax.
