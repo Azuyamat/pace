@@ -38,14 +38,3 @@ func anyFileExistsIndicator(filePaths ...string) indicatorFunc {
 		return false
 	}
 }
-
-func anyDirExistsIndicator(dirPaths ...string) indicatorFunc {
-	return func(projectPath string) bool {
-		for _, dirPath := range dirPaths {
-			if dirExistsIndicator(dirPath)(projectPath) {
-				return true
-			}
-		}
-		return false
-	}
-}

@@ -44,15 +44,10 @@ var detectors = []detector{
 			"go.sum",
 			"main.go",
 		),
-		anyDirExistsIndicator(
-			"cmd",
-			"pkg",
-		),
 	),
 	newBaseDetector(
 		models.ProjectTypeNode,
 		fileExistsIndicator("package.json"),
-		dirExistsIndicator("node_modules"),
 	),
 	newBaseDetector(
 		models.ProjectTypePython,
@@ -60,15 +55,10 @@ var detectors = []detector{
 			"*.py",
 			"main.py",
 		),
-		anyDirExistsIndicator(
-			"src",
-			"tests",
-		),
 	),
 	newBaseDetector(
 		models.ProjectTypeRust,
 		fileExistsIndicator("Cargo.toml"),
-		dirExistsIndicator("src"),
 	),
 }
 
@@ -87,4 +77,12 @@ func DetectCurrentProjectType() models.ProjectType {
 		return models.ProjectTypeUnknown
 	}
 	return DetectProjectType(cwd)
+}
+
+func ListSupportedProjectTypes() []models.ProjectType {
+	var types []models.ProjectType
+	for _, detector := range detectors {
+		types = append(types, detector.ProjectType())
+	}
+	return types
 }

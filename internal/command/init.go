@@ -32,6 +32,20 @@ func initHandler(ctx *gear.Context, args gear.ValidatedArgs) error {
 		projectType = models.ParseProjectType(projectTypeFlag)
 	} else {
 		projectType = detector.DetectCurrentProjectType()
+		if projectType == models.ProjectTypeUnknown {
+			logger.Warning("Could not detect project type automatically.")
+			typeList := detector.ListSupportedProjectTypes()
+			logger.Info("Supported project types: %v", typeList)
+			answer, err := logger.Prompt("Please specify the project type (or 'unknown' for default config): ")
+			if err != nil {
+				return err
+			}
+			projectType = models.ParseProjectType(answer)
+			if answer != "y" {
+				logger.Warning("Initialization cancelled.")
+				return nil
+			}
+		}
 	}
 	if projectType == models.ProjectTypeUnknown {
 		logger.Info("Detected project type is unknown and would generate a default config.")
