@@ -34,7 +34,15 @@ func initHandler(ctx *gear.Context, args gear.ValidatedArgs) error {
 		projectType = detector.DetectCurrentProjectType()
 	}
 	if projectType == models.ProjectTypeUnknown {
-		return fmt.Errorf("unsupported project type: %s", projectType)
+		logger.Info("Detected project type is unknown and would generate a default config.")
+		answer, err := logger.Prompt("Continue with default config? (y/n): ")
+		if err != nil {
+			return err
+		}
+		if answer != "y" {
+			logger.Warning("Initialization cancelled.")
+			return nil
+		}
 	}
 	logger.Info("Detected project type: %s", projectType)
 	generator := generator.GetGeneratorByProjectType(projectType)

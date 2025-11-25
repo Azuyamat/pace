@@ -20,6 +20,10 @@ func ParseProjectType(s string) ProjectType {
 		return ProjectTypePython
 	case "rust":
 		return ProjectTypeRust
+	case "unknown":
+		return ProjectTypeUnknown
+	case "default":
+		return ProjectTypeUnknown
 	default:
 		return ProjectTypeUnknown
 	}

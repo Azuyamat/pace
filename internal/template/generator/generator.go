@@ -60,6 +60,8 @@ func (g *baseGenerator) afterGenerate(cfg *config.Config) error {
 
 func GetGeneratorByProjectType(projectType models.ProjectType) Generator {
 	switch projectType {
+	case models.ProjectTypeUnknown:
+		return NewUnknownGenerator()
 	case models.ProjectTypeGo:
 		return NewGoGenerator()
 	case models.ProjectTypeNode:

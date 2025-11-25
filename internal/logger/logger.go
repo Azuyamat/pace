@@ -125,6 +125,18 @@ func (l *Logger) TaskError(taskName string, format string, args ...interface{}) 
 	fmt.Printf("%s %s %s\n", l.timestamp(), taskBadge, ColorRed.Bright().Wrap(msg))
 }
 
+func (l *Logger) Prompt(format string, args ...interface{}) (string, error) {
+	if !l.enabled || l.level > LevelInfo {
+		return "", fmt.Errorf("logger is disabled")
+	}
+	msg := fmt.Sprintf(format, args...)
+	promptBadge := l.badge("PROMPT", ColorCyan)
+	fmt.Printf("%s %s %s ", l.timestamp(), promptBadge, ColorWhite.Wrap(msg))
+	var input string
+	fmt.Scanln(&input)
+	return input, nil
+}
+
 func (l *Logger) Print(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	fmt.Println(msg)
@@ -167,6 +179,10 @@ func Task(format string, args ...interface{}) {
 
 func Debug(format string, args ...interface{}) {
 	Default.Debug(format, args...)
+}
+
+func Prompt(format string, args ...interface{}) (string, error) {
+	return Default.Prompt(format, args...)
 }
 
 func Print(format string, args ...interface{}) {
