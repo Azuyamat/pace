@@ -7,7 +7,7 @@
 
 A cross-platform task runner and build orchestration tool. Define tasks once, run them anywhere.
 
-[![Pace Logo](./public/LogoPace-320x320.png)](./public/LogoPace-320x320.png)
+[![Pace Logo](./public/BannerPace-640x320.png)](./public/BannerPace-640x320.png)
 
 ## Why Pace?
 
