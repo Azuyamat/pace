@@ -55,7 +55,7 @@ func (w *Watcher) setupWatchPaths(watcher *fsnotify.Watcher) error {
 	dirs := make(map[string]bool)
 
 	for _, pattern := range w.patterns {
-		matches, err := w.expandPattern(pattern)
+		matches, err := expandGlobPattern(pattern)
 		if err != nil {
 			w.log.Warning("invalid pattern %q: %v", pattern, err)
 			continue
@@ -84,10 +84,6 @@ func (w *Watcher) setupWatchPaths(watcher *fsnotify.Watcher) error {
 	}
 
 	return nil
-}
-
-func (w *Watcher) expandPattern(pattern string) ([]string, error) {
-	return expandGlobPattern(pattern)
 }
 
 func (w *Watcher) eventLoop(watcher *fsnotify.Watcher) error {
@@ -150,30 +146,8 @@ func (w *Watcher) isRelevantEvent(event fsnotify.Event) bool {
 
 func (w *Watcher) matchesPattern(filePath string) bool {
 	for _, pattern := range w.patterns {
-		if containsDoublestar(pattern) {
-			filePattern := filepath.Base(pattern)
-			if matched, err := filepath.Match(filePattern, filepath.Base(filePath)); err == nil && matched {
-				return true
-			}
-			continue
-		}
-
-		matched, err := filepath.Match(pattern, filePath)
-		if err == nil && matched {
+		if matchesGlobPattern(pattern, filePath) {
 			return true
-		}
-
-		normalizedPattern := filepath.FromSlash(pattern)
-		if matched, err := filepath.Match(normalizedPattern, filePath); err == nil && matched {
-			return true
-		}
-
-		if matched, err := filepath.Match(filepath.Base(pattern), filepath.Base(filePath)); err == nil && matched {
-			patternDir := filepath.Dir(pattern)
-			fileDir := filepath.Dir(filePath)
-			if patternDir == fileDir || patternDir == "." {
-				return true
-			}
 		}
 	}
 	return false
