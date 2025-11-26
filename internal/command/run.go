@@ -10,7 +10,8 @@ import (
 
 var runCommand = gear.NewExecutableCommand("run", "Run a specified task").
 	Args(
-		gear.NewStringArg("task", "Name of the task to run").AsOptional()).
+		gear.NewStringArg("task", "Name of the task to run").AsOptional(),
+		gear.NewStringArg("args", "Arguments to pass to the task").AsOptional().AsVariadic()).
 	Handler(runHandler)
 
 func init() {
@@ -30,9 +31,11 @@ func runHandler(ctx *gear.Context, args gear.ValidatedArgs) error {
 		return fmt.Errorf("task '%s' not found", taskName)
 	}
 
+	extraArgs := args.VariadicStrings("args")
+
 	if task.Watch {
-		return Watch(config, []string{taskName})
+		return Watch(config, []string{taskName}, extraArgs...)
 	}
 
-	return runner.RunTask(task)
+	return runner.RunTask(task, extraArgs...)
 }

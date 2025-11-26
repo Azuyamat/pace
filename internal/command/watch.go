@@ -11,7 +11,8 @@ import (
 
 var watchCommand = gear.NewExecutableCommand("watch", "Watch a task's inputs and re-run it on changes").
 	Args(
-		gear.NewStringArg("task", "Name of the task to watch")).
+		gear.NewStringArg("task", "Name of the task to watch"),
+		gear.NewStringArg("args", "Arguments to pass to the task").AsOptional().AsVariadic()).
 	Handler(watchHandler)
 
 func init() {
@@ -24,10 +25,11 @@ func watchHandler(ctx *gear.Context, args gear.ValidatedArgs) error {
 		return err
 	}
 	taskName := args.String("task")
-	return Watch(config, []string{taskName})
+	extraArgs := args.VariadicStrings("args")
+	return Watch(config, []string{taskName}, extraArgs...)
 }
 
-func Watch(cfg *config.Config, args []string) error {
+func Watch(cfg *config.Config, args []string, extraArgs ...string) error {
 	if len(args) < 1 {
 		logger.Error("No task name provided for watch command")
 		return fmt.Errorf("no task name provided for watch command")
@@ -51,7 +53,7 @@ func Watch(cfg *config.Config, args []string) error {
 	}
 
 	r := runner.NewRunner(cfg)
-	w := runner.NewWatcher(r, task, task.Inputs)
+	w := runner.NewWatcher(r, task, task.Inputs, extraArgs)
 
 	if err := w.Watch(); err != nil {
 		return err

@@ -44,3 +44,11 @@ hook fmt {
     command "go fmt ./..."
     description "Format code"
 }
+
+task arg {
+	command "go mod $arg"
+	description "Run go mod with specified arguments"
+	args {
+		required ["arg"]
+	}
+}

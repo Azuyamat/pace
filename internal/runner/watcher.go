@@ -19,17 +19,19 @@ type Watcher struct {
 	runner     *Runner
 	task       models.Task
 	patterns   []string
+	extraArgs  []string
 	log        *logger.Logger
 	cancelFunc context.CancelFunc
 	taskMu     sync.Mutex
 }
 
-func NewWatcher(runner *Runner, task models.Task, patterns []string) *Watcher {
+func NewWatcher(runner *Runner, task models.Task, patterns []string, extraArgs []string) *Watcher {
 	return &Watcher{
-		runner:   runner,
-		task:     task,
-		patterns: patterns,
-		log:      logger.New(),
+		runner:    runner,
+		task:      task,
+		patterns:  patterns,
+		extraArgs: extraArgs,
+		log:       logger.New(),
 	}
 }
 
@@ -164,7 +166,7 @@ func (w *Watcher) resetDebounce(debounce *time.Timer) {
 }
 
 func (w *Watcher) runTask() {
-	if err := w.runner.RunTask(w.task); err != nil {
+	if err := w.runner.RunTask(w.task, w.extraArgs...); err != nil {
 		w.log.Error("%v", err)
 	}
 }
@@ -188,7 +190,7 @@ func (w *Watcher) runTaskAsync(done chan<- struct{}) {
 	w.runner.Reset()
 	w.log.Debug("Starting task in goroutine...")
 
-	err := w.runner.RunTaskWithContext(ctx, w.task)
+	err := w.runner.RunTaskWithContext(ctx, w.task, w.extraArgs...)
 	w.log.Debug("Task goroutine finished with err: %v", err)
 
 	if ctx.Err() == context.Canceled {

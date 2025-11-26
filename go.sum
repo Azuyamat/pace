@@ -1,5 +1,5 @@
-github.com/azuyamat/gear v0.0.0-20251118045405-f2133a4d3c3a h1:lsdZXJX9/D6xsvmDhBsmt0O4JndCvbwyAnURauI35TA=
-github.com/azuyamat/gear v0.0.0-20251118045405-f2133a4d3c3a/go.mod h1:r+5DrbDCyAmVC3AOtSxvZivpSoIxwV6/KsaA0IUExB8=
+github.com/azuyamat/gear v0.0.0-20251126024211-3a86d43d81ef h1:s8LIUG7Hux54V8e4xy0/YYk6JBIyK1KggHDbRipFdrs=
+github.com/azuyamat/gear v0.0.0-20251126024211-3a86d43d81ef/go.mod h1:r+5DrbDCyAmVC3AOtSxvZivpSoIxwV6/KsaA0IUExB8=
 github.com/azuyamat/globber v0.0.0-20251126020500-7fa19a3402a2 h1:uPR9bpHS0tmHde8FD0200Swu9qdjZcN+zOGypEl27Hw=
 github.com/azuyamat/globber v0.0.0-20251126020500-7fa19a3402a2/go.mod h1:p4AYsIvRO0SFjr0MH2hyEgO3085qZkIa3ymrrj/bxvw=
 github.com/fsnotify/fsnotify v1.9.0 h1:2Ml+OJNzbYCTzsxtv8vKSFD9PbJjmhYF14k/jKC7S9k=
