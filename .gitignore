@@ -1,2 +1,4 @@
 .pace-cache/
 bin/
+.vscode/
+.DS_Store

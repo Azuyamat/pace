@@ -3,7 +3,7 @@ task compile {
     description "Compile the VSCode Pace extension"
 
     inputs ["package.json", "tsconfig.json", "src/*.ts"]
-    outputs ["out/*.js"]
+    outputs ["build/*.js"]
     cache true
 }
 
