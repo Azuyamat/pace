@@ -1,10 +1,17 @@
 {
   "name": "pace-language",
   "displayName": "Pace Task Runner Language",
-  "description": "Syntax highlighting and autocomplete for Pace configuration files",
+  "description": "Syntax highlighting, autocomplete, diagnostics, and task commands for Pace configuration files",
   "version": "0.4.0",
   "publisher": "PaceLanguageSupport",
   "icon": "./images/LogoPace-128x128.png",
+  "keywords": [
+    "pace",
+    "task-runner",
+    "build",
+    "configuration",
+    "language-support"
+  ],
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -13,11 +20,31 @@
     "url": "https://github.com/Azuyamat/pace.git",
     "directory": "vscode-pace"
   },
+  "bugs": {
+    "url": "https://github.com/Azuyamat/pace/issues"
+  },
+  "homepage": "https://github.com/Azuyamat/pace/tree/main/vscode-pace#readme",
   "license": "MIT",
+  "galleryBanner": {
+    "color": "#1f2937",
+    "theme": "dark"
+  },
   "categories": [
-    "Programming Languages"
+    "Programming Languages",
+    "Other"
   ],
   "main": "./build/extension.js",
+  "activationEvents": [
+    "onLanguage:pace",
+    "onCommand:pace.runTaskFromCodeLens",
+    "onCommand:pace.watchTaskFromCodeLens",
+    "onCommand:pace.generateConfig",
+    "onCommand:pace.runCurrentTask",
+    "onCommand:pace.runTask",
+    "onCommand:pace.runDefaultTask",
+    "onCommand:pace.insertGoTaskTemplate",
+    "onCommand:pace.showSchemaVersion"
+  ],
   "contributes": {
     "languages": [
       {
@@ -29,6 +56,9 @@
         "extensions": [
           ".pace"
         ],
+        "filenames": [
+          "config.pace"
+        ],
         "configuration": "./language-configuration.json"
       }
     ],
@@ -38,17 +68,120 @@
         "scopeName": "source.pace",
         "path": "./syntaxes/pace.tmLanguage.json"
       }
-    ]
+    ],
+    "commands": [
+      {
+        "command": "pace.runTaskFromCodeLens",
+        "title": "Pace: Run Task from CodeLens"
+      },
+      {
+        "command": "pace.watchTaskFromCodeLens",
+        "title": "Pace: Watch Task from CodeLens"
+      },
+      {
+        "command": "pace.generateConfig",
+        "title": "Pace: Generate config.pace"
+      },
+      {
+        "command": "pace.runCurrentTask",
+        "title": "Pace: Run Current Task"
+      },
+      {
+        "command": "pace.runTask",
+        "title": "Pace: Run Task"
+      },
+      {
+        "command": "pace.runDefaultTask",
+        "title": "Pace: Run Default Task"
+      },
+      {
+        "command": "pace.insertGoTaskTemplate",
+        "title": "Pace: Insert Generated Go Task"
+      },
+      {
+        "command": "pace.showSchemaVersion",
+        "title": "Pace: Show Schema Version"
+      }
+    ],
+    "problemMatchers": [
+      {
+        "name": "pace",
+        "owner": "pace",
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}"
+        ],
+        "pattern": {
+          "regexp": "^(.+):(\\d+):(\\d+):\\s*(error|warning):\\s*(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        }
+      }
+    ],
+    "configuration": {
+      "title": "Pace",
+      "properties": {
+        "pace.path": {
+          "type": "string",
+          "default": "pace",
+          "description": "Path to the Pace CLI executable used by diagnostics and task commands."
+        },
+        "pace.diagnostics.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable diagnostics by running `pace validate --json` for Pace files."
+        },
+        "pace.diagnostics.run": {
+          "type": "string",
+          "enum": [
+            "onType",
+            "onSave"
+          ],
+          "default": "onType",
+          "description": "When to run Pace CLI diagnostics."
+        },
+        "pace.codeLens.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable CodeLens actions above Pace task definitions."
+        },
+        "pace.completions.projectAware": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable project-aware completion features when available."
+        },
+        "pace.logging.debug": {
+          "type": "boolean",
+          "default": false,
+          "description": "Write verbose Pace extension debug logs to the Pace output channel."
+        },
+        "pace.schema.versionWarnings.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Warn when the installed Pace CLI language schema version is incompatible with the bundled extension schema."
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
+    "generate:schema": "cd .. && go run ./cmd/pace schema --generate-vscode",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile"
+    "pretest": "npm run compile",
+    "test": "node build/test/contextDetector.test.js && node build/test/documentSymbols.test.js && node build/test/completionProvider.test.js",
+    "prepackage": "npm run generate:schema",
+    "package": "node ./node_modules/@vscode/vsce/vsce package",
+    "install:local": "code --install-extension pace-language-*.vsix --force",
+    "dev": "npm run compile && code --extensionDevelopmentPath=."
   },
   "devDependencies": {
     "@types/node": "^18.0.0",
     "@types/vscode": "^1.75.0",
+    "@vscode/vsce": "^3.9.2",
     "typescript": "^5.0.0"
   }
 }

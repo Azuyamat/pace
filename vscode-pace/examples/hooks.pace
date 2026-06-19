@@ -1,0 +1,21 @@
+# Tasks with reusable hooks
+hook setup {
+    description "Prepare the environment"
+    command "echo setup"
+    env {
+        PACE_ENV = "test"
+    }
+}
+
+hook cleanup {
+    description "Clean temporary files"
+    command "echo cleanup"
+}
+
+task integration {
+    description "Run integration checks"
+    requires [setup]
+    triggers [cleanup]
+    on_success [cleanup]
+    command "echo integration"
+}

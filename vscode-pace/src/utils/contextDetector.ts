@@ -1,56 +1,194 @@
 import * as vscode from 'vscode';
 
+export interface BlockFrame {
+    type: string;
+    name?: string;
+}
+
 export interface DocumentContext {
     inTaskBlock: boolean;
     inHookBlock: boolean;
     inEnvBlock: boolean;
     inArgsBlock: boolean;
     isTopLevel: boolean;
+    blockStack: BlockFrame[];
+    currentTaskName?: string;
 }
+
+const namedBlocks = new Set(['task', 'hook', 'env', 'args']);
 
 export class ContextDetector {
     static detectContext(document: vscode.TextDocument, position: vscode.Position): DocumentContext {
-        const inTaskBlock = this.isInBlock(document, position, 'task');
-        const inHookBlock = this.isInBlock(document, position, 'hook');
-        const inEnvBlock = this.isInBlock(document, position, 'env');
-        const inArgsBlock = this.isInBlock(document, position, 'args');
+        const blockStack = this.getBlockStack(document, position);
+        const currentBlock = blockStack[blockStack.length - 1];
+        const currentTask = [...blockStack].reverse().find(block => block.type === 'task');
 
         return {
-            inTaskBlock,
-            inHookBlock,
-            inEnvBlock,
-            inArgsBlock,
-            isTopLevel: !inTaskBlock && !inHookBlock && !inEnvBlock && !inArgsBlock
+            inTaskBlock: !!currentBlock && currentBlock.type === 'task',
+            inHookBlock: !!currentBlock && currentBlock.type === 'hook',
+            inEnvBlock: !!currentBlock && currentBlock.type === 'env',
+            inArgsBlock: !!currentBlock && currentBlock.type === 'args',
+            isTopLevel: blockStack.length === 0,
+            blockStack,
+            currentTaskName: currentTask?.name
         };
     }
 
-    private static isInBlock(
-        document: vscode.TextDocument,
-        position: vscode.Position,
-        blockType: string
-    ): boolean {
-        let openBraces = 0;
-        let inTargetBlock = false;
+    static getBlockStack(document: vscode.TextDocument, position: vscode.Position): BlockFrame[] {
+        const stack: BlockFrame[] = [];
+        let pendingBlock: BlockFrame | undefined;
+        let expectBlockName = false;
+        let inString = false;
+        let inMultilineString = false;
+        let escapeNext = false;
 
-        for (let i = position.line; i >= 0; i--) {
-            const line = document.lineAt(i).text;
-            
-            if (line.includes('}')) openBraces--;
-            if (line.includes('{')) {
-                openBraces++;
-                if (openBraces > 0 && line.includes(blockType + ' ')) {
-                    inTargetBlock = true;
+        const handleToken = (token: string) => {
+            if (!token) {
+                return;
+            }
+
+            if (expectBlockName && pendingBlock && (pendingBlock.type === 'task' || pendingBlock.type === 'hook')) {
+                pendingBlock.name = token;
+                expectBlockName = false;
+                return;
+            }
+
+            if (namedBlocks.has(token)) {
+                pendingBlock = { type: token };
+                expectBlockName = token === 'task' || token === 'hook';
+            }
+        };
+
+        for (let lineNumber = 0; lineNumber <= position.line; lineNumber++) {
+            const fullLine = document.lineAt(lineNumber).text;
+            const line = lineNumber === position.line ? fullLine.substring(0, position.character) : fullLine;
+            let token = '';
+
+            const flushToken = () => {
+                handleToken(token);
+                token = '';
+            };
+
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                const nextThree = line.substring(i, i + 3);
+
+                if (inMultilineString) {
+                    if (nextThree === '"""') {
+                        inMultilineString = false;
+                        i += 2;
+                    }
+                    continue;
+                }
+
+                if (inString) {
+                    if (escapeNext) {
+                        escapeNext = false;
+                    } else if (char === '\\') {
+                        escapeNext = true;
+                    } else if (char === '"') {
+                        inString = false;
+                    }
+                    continue;
+                }
+
+                if (char === '#') {
+                    flushToken();
                     break;
+                }
+
+                if (nextThree === '"""') {
+                    flushToken();
+                    inMultilineString = true;
+                    i += 2;
+                    continue;
+                }
+
+                if (char === '"') {
+                    flushToken();
+                    inString = true;
+                    continue;
+                }
+
+                if (/[A-Za-z0-9_-]/.test(char)) {
+                    token += char;
+                    continue;
+                }
+
+                flushToken();
+
+                if (char === '{') {
+                    stack.push(pendingBlock ?? { type: 'anonymous' });
+                    pendingBlock = undefined;
+                    expectBlockName = false;
+                } else if (char === '}') {
+                    stack.pop();
+                    pendingBlock = undefined;
+                    expectBlockName = false;
+                }
+            }
+
+            flushToken();
+        }
+
+        return stack;
+    }
+    
+    static hasTypedContent(document: vscode.TextDocument, position: vscode.Position): boolean {
+        return true;
+    }
+
+    static isPositionInCode(document: vscode.TextDocument, position: vscode.Position): boolean {
+        let inString = false;
+        let inMultilineString = false;
+        let escapeNext = false;
+
+        for (let lineNumber = 0; lineNumber <= position.line; lineNumber++) {
+            const fullLine = document.lineAt(lineNumber).text;
+            const line = lineNumber === position.line ? fullLine.substring(0, position.character) : fullLine;
+
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                const nextThree = line.substring(i, i + 3);
+
+                if (inMultilineString) {
+                    if (nextThree === '"""') {
+                        inMultilineString = false;
+                        i += 2;
+                    }
+                    continue;
+                }
+
+                if (inString) {
+                    if (escapeNext) {
+                        escapeNext = false;
+                    } else if (char === '\\') {
+                        escapeNext = true;
+                    } else if (char === '"') {
+                        inString = false;
+                    }
+                    continue;
+                }
+
+                if (char === '#') {
+                    if (lineNumber === position.line) {
+                        return false;
+                    }
+                    break;
+                }
+
+                if (nextThree === '"""') {
+                    inMultilineString = true;
+                    i += 2;
+                    continue;
+                }
+
+                if (char === '"') {
+                    inString = true;
                 }
             }
         }
 
-        return inTargetBlock && openBraces > 0;
-    }
-    
-    static hasTypedContent(document: vscode.TextDocument, position: vscode.Position): boolean {
-        const lineText = document.lineAt(position.line).text;
-        const textBeforeCursor = lineText.substring(0, position.character).trim();
-        return textBeforeCursor.length > 0;
+        return !inString && !inMultilineString;
     }
 }

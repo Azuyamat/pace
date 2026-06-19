@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/azuyamat/pace/internal/config/schema"
 	"github.com/azuyamat/pace/internal/models"
 )
 
@@ -34,41 +35,55 @@ func hookProp(propType PropertyType, hookField, hint string) PropertyDefinition 
 	return PropertyDefinition{Type: propType, HookField: hookField, Hint: hint}
 }
 
-var taskPropertyRegistry = map[string]PropertyDefinition{
-	"command":           prop(PropString, "Command", "Command values must be strings, e.g., command \"echo hello\""),
-	"inputs":            prop(PropStringArray, "Inputs", "Input values must be strings, e.g., [\"src/main.go\", \"src/util.go\"]"),
-	"outputs":           prop(PropStringArray, "Outputs", "Output values must be strings, e.g., [\"bin/app\", \"bin/util\"]"),
-	"depends-on":        prop(PropStringArray, "DependsOn", "Task names must be strings, e.g., [build, test]"),
-	"dependencies":      prop(PropStringArray, "DependsOn", "Task names must be strings, e.g., [build, test]"),
-	"env":               prop(PropStringMap, "Env", ""),
-	"cache":             prop(PropBoolean, "Cache", ""),
-	"working_dir":       prop(PropString, "WorkingDir", "Working directory value must be a string, e.g., \"/app\""),
-	"requires":          prop(PropStringArray, "Requires", "Hook names must be strings, e.g., [setup, clean]"),
-	"before":            prop(PropStringArray, "Requires", "Hook names must be strings, e.g., [setup, clean]"),
-	"triggers":          prop(PropStringArray, "Triggers", "Hook names must be strings, e.g., [cleanup, notify]"),
-	"after":             prop(PropStringArray, "Triggers", "Hook names must be strings, e.g., [cleanup, notify]"),
-	"description":       prop(PropString, "Description", "Description values must be strings"),
-	"watch":             prop(PropBoolean, "Watch", ""),
-	"parallel":          prop(PropBoolean, "Parallel", ""),
-	"silent":            prop(PropBoolean, "Silent", ""),
-	"continue_on_error": prop(PropBoolean, "ContinueOnError", ""),
-	"timeout":           prop(PropString, "Timeout", "Timeout values must be strings like \"5m\", \"30s\", \"1h\""),
-	"retry":             prop(PropNumber, "Retry", ""),
-	"retry_delay":       prop(PropString, "RetryDelay", "Retry_delay values must be strings like \"5s\", \"1m\""),
-	"on_success":        prop(PropStringArray, "OnSuccess", "Hook names must be strings"),
-	"on_failure":        prop(PropStringArray, "OnFailure", "Hook names must be strings"),
-	"when":              prop(PropString, "When", "Condition value must be a string"),
-	"args": {
-		Type:         PropCustom,
-		CustomParser: (*PropertyParser).parseArgs,
-	},
+var taskPropertyRegistry = buildTaskPropertyRegistry(schema.Get().TaskProps)
+var hookPropertyRegistry = buildHookPropertyRegistry(schema.Get().HookProps)
+
+func buildTaskPropertyRegistry(properties []schema.Property) map[string]PropertyDefinition {
+	registry := make(map[string]PropertyDefinition, len(properties))
+	for _, property := range properties {
+		if property.Type == "argsBlock" {
+			registry[property.Name] = PropertyDefinition{Type: PropCustom, CustomParser: (*PropertyParser).parseArgs}
+			continue
+		}
+		registry[property.Name] = prop(schemaPropType(property.Type), property.Field, hintForProperty(property))
+	}
+	return registry
 }
 
-var hookPropertyRegistry = map[string]PropertyDefinition{
-	"command":     hookProp(PropString, "Command", "Command values must be strings, e.g., command \"echo setup\""),
-	"env":         hookProp(PropStringMap, "Env", ""),
-	"working_dir": hookProp(PropString, "WorkingDir", "Working directory value must be a string"),
-	"description": hookProp(PropString, "Description", "Description values must be strings"),
+func buildHookPropertyRegistry(properties []schema.Property) map[string]PropertyDefinition {
+	registry := make(map[string]PropertyDefinition, len(properties))
+	for _, property := range properties {
+		registry[property.Name] = hookProp(schemaPropType(property.Type), property.Field, hintForProperty(property))
+	}
+	return registry
+}
+
+func schemaPropType(propType string) PropertyType {
+	switch propType {
+	case "string":
+		return PropString
+	case "stringArray":
+		return PropStringArray
+	case "stringMap":
+		return PropStringMap
+	case "boolean":
+		return PropBoolean
+	case "number":
+		return PropNumber
+	default:
+		return PropCustom
+	}
+}
+
+func hintForProperty(property schema.Property) string {
+	switch property.Type {
+	case "string":
+		return fmt.Sprintf("%s values must be strings", property.Name)
+	case "stringArray":
+		return fmt.Sprintf("%s values must be strings or identifiers in an array", property.Name)
+	default:
+		return ""
+	}
 }
 
 type PropertyParser struct {

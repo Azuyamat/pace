@@ -38,11 +38,11 @@
       "patterns": [
         {
           "name": "keyword.control.pace",
-          "match": "\\b(set|default|alias|globals|hook|task)\\b"
+          "match": "\\b(var|default|alias|import|hook|task)\\b"
         },
         {
           "name": "keyword.other.pace",
-          "match": "\\b(description|command|before|after|inputs|outputs|cache|on_success|on_failure|dependencies|parallel|timeout|retry|retry_delay|silent|watch|continue_on_error|env|args|required|optional)\\b"
+          "match": "\\b(description|command|depends-on|dependencies|requires|before|triggers|after|on_success|on_failure|inputs|outputs|env|args|cache|parallel|silent|watch|continue_on_error|timeout|retry|retry_delay|working_dir|when|required|optional)\\b"
         }
       ]
     },

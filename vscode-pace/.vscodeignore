@@ -1,3 +1,17 @@
+# Development dependencies and generated packages
 node_modules
 *.vsix
 .vscode-test
+
+# TypeScript sources are compiled into build/** before packaging.
+src/**
+tsconfig.json
+*.map
+**/*.map
+build/test/**
+
+# Local editor and repository-only files
+.vscode/**
+TODO.md
+config.pace
+.gitignore

@@ -1,0 +1,71 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Pace VS Code: Compile",
+      "type": "shell",
+      "command": "npm run compile",
+      "options": {
+        "cwd": "${workspaceFolder}/vscode-pace"
+      },
+      "problemMatcher": "$tsc"
+    },
+    {
+      "label": "Pace VS Code: Watch",
+      "type": "shell",
+      "command": "npm run watch",
+      "options": {
+        "cwd": "${workspaceFolder}/vscode-pace"
+      },
+      "problemMatcher": "$tsc-watch",
+      "isBackground": true
+    },
+    {
+      "label": "Pace VS Code: Test",
+      "type": "shell",
+      "command": "npm test",
+      "options": {
+        "cwd": "${workspaceFolder}/vscode-pace"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Pace VS Code: Package",
+      "type": "shell",
+      "command": "npm run package",
+      "options": {
+        "cwd": "${workspaceFolder}/vscode-pace"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Pace VS Code: Install Local VSIX",
+      "type": "shell",
+      "command": "npm run install:local",
+      "options": {
+        "cwd": "${workspaceFolder}/vscode-pace"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Install/Update Pace VS Code Extension",
+      "type": "shell",
+      "problemMatcher": [],
+      "options": {
+        "env": {
+          "VSCODE_EXEC_PATH": "${execPath}",
+          "WORKSPACE_FOLDER": "${workspaceFolder}"
+        }
+      },
+      "windows": {
+        "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"${workspaceFolder}\\scripts\\install-vscode-pace-extension.ps1\""
+      },
+      "linux": {
+        "command": "\"${workspaceFolder}/scripts/install-vscode-pace-extension.sh\""
+      },
+      "osx": {
+        "command": "\"${workspaceFolder}/scripts/install-vscode-pace-extension.sh\""
+      }
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+# Args, environment variables, arrays, booleans, numbers, and multiline strings
+task deploy {
+    description "Deploy with arguments"
+    command """echo deploy
+# braces in multiline strings should be preserved: { }
+echo done"""
+    working_dir "."
+    env {
+        TARGET = "staging"
+    }
+    args {
+        required [target]
+        optional [version]
+    }
+    inputs ["dist/**"]
+    outputs ["deploy.log"]
+    parallel false
+    silent false
+    continue_on_error false
+    retry 2
+    retry_delay "3s"
+    timeout "5m"
+    when "target != ''"
+}

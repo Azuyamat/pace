@@ -1,0 +1,26 @@
+# Representative Go project tasks
+var BINARY = "bin/app"
+
+default test
+
+task tidy {
+    description "Update Go module files"
+    command "go mod tidy"
+    inputs ["go.mod", "go.sum"]
+}
+
+task test {
+    description "Run Go tests"
+    command "go test ./..."
+    inputs ["**/*.go", "go.mod", "go.sum"]
+    cache true
+}
+
+task build [b] {
+    description "Build the application"
+    command "go build -o ${BINARY} ./cmd/app"
+    depends-on [test]
+    inputs ["cmd/**/*.go", "internal/**/*.go", "go.mod", "go.sum"]
+    outputs ["${BINARY}"]
+    cache true
+}

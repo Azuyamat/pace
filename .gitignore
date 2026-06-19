@@ -1,4 +1,5 @@
 .pace-cache/
 bin/
-.vscode/
+.vscode/*
+!.vscode/tasks.json
 .DS_Store

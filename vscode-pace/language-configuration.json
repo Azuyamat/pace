@@ -19,7 +19,7 @@
   ],
   "folding": {
     "markers": {
-      "start": "^\\s*\\b(task|hook|globals|env|args)\\b.*\\{\\s*$",
+      "start": "^\\s*\\b(task|hook|env|args)\\b.*\\{\\s*$",
       "end": "^\\s*\\}\\s*$"
     }
   }

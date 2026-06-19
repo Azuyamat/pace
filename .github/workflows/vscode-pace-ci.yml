@@ -1,0 +1,58 @@
+name: VS Code Extension CI
+
+on:
+  pull_request:
+    paths:
+      - 'vscode-pace/**'
+      - 'internal/config/schema/**'
+      - 'internal/command/schema.go'
+      - '.github/workflows/vscode-pace-ci.yml'
+  push:
+    branches:
+      - master
+    paths:
+      - 'vscode-pace/**'
+      - 'internal/config/schema/**'
+      - 'internal/command/schema.go'
+      - '.github/workflows/vscode-pace-ci.yml'
+
+jobs:
+  build-test-package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Verify generated VS Code artifacts
+        run: |
+          go run ./cmd/pace schema --generate-vscode
+          git diff --exit-code -- vscode-pace/src/generated vscode-pace/schemas vscode-pace/syntaxes/pace.generated-keywords.json vscode-pace/syntaxes/pace.tmLanguage.json vscode-pace/LANGUAGE_REFERENCE.generated.md
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: vscode-pace/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./vscode-pace
+        run: npm ci
+
+      - name: Compile extension
+        working-directory: ./vscode-pace
+        run: npm run compile
+
+      - name: Run tests
+        working-directory: ./vscode-pace
+        run: npm test
+
+      - name: Package extension
+        working-directory: ./vscode-pace
+        run: npm run package

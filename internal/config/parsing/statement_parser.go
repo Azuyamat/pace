@@ -3,6 +3,7 @@ package parsing
 import (
 	"fmt"
 
+	"github.com/azuyamat/pace/internal/config/schema"
 	"github.com/azuyamat/pace/internal/config/types"
 	"github.com/azuyamat/pace/internal/models"
 )
@@ -68,13 +69,21 @@ func ptr[T any](v T) *T { return &v }
 
 type StatementHandler func(p *Parser, config *types.Config) error
 
-var statementRegistry = map[string]StatementHandler{
-	"task":    (*Parser).parseTaskStatement,
-	"hook":    (*Parser).parseHookStatement,
-	"var":     (*Parser).parseSimpleStatement,
-	"default": (*Parser).parseSimpleStatement,
-	"alias":   (*Parser).parseSimpleStatement,
-	"import":  (*Parser).parseSimpleStatement,
+var statementRegistry = buildStatementRegistry(schema.Get().TopLevel)
+
+func buildStatementRegistry(statements []schema.Statement) map[string]StatementHandler {
+	registry := make(map[string]StatementHandler, len(statements))
+	for _, statement := range statements {
+		switch statement.Name {
+		case "task":
+			registry[statement.Name] = (*Parser).parseTaskStatement
+		case "hook":
+			registry[statement.Name] = (*Parser).parseHookStatement
+		default:
+			registry[statement.Name] = (*Parser).parseSimpleStatement
+		}
+	}
+	return registry
 }
 
 func (p *Parser) parseTopLevelStatement(config *types.Config) error {

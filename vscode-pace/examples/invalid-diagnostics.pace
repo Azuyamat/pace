@@ -1,0 +1,4 @@
+# Intentionally invalid file for diagnostics QA
+task broken {
+    unknown_property true
+    command "missing closing brace"

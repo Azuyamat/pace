@@ -1,0 +1,9 @@
+# Minimal Pace configuration
+var GREETING = "hello"
+
+default greet
+
+task greet [g] {
+    description "Print a greeting"
+    command "echo ${GREETING}"
+}
