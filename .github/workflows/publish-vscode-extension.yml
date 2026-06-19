@@ -2,31 +2,23 @@ name: Publish VS Code Extension
 
 on:
   push:
-    branches:
-      - master
+    tags:
+      - 'vscode-v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'VS Code extension version to publish, e.g. 0.4.1'
+        required: true
+        type: string
+
+concurrency:
+  group: vscode-extension-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  check-changes:
-    runs-on: ubuntu-latest
-    outputs:
-      extension-changed: ${{ steps.filter.outputs.extension }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Check for extension changes
-        uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            extension:
-              - 'vscode-pace/**'
-
   publish:
     runs-on: ubuntu-latest
-    needs: check-changes
-    if: needs.check-changes.outputs.extension-changed == 'true'
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -34,11 +26,32 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
+
+      - name: Determine extension version
+        id: version
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION="${GITHUB_REF_NAME#vscode-v}"
+          fi
+
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid version: $VERSION" >&2
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Install dependencies
         working-directory: ./vscode-pace
         run: npm ci
+
+      - name: Set package version from release version
+        working-directory: ./vscode-pace
+        run: npm version "${{ steps.version.outputs.version }}" --no-git-tag-version --allow-same-version
 
       - name: Compile extension
         working-directory: ./vscode-pace
